@@ -1,0 +1,41 @@
+{
+  "name": "task-management-app-api-tests",
+  "version": "1.0.0",
+  "description": "Automated API testing suite for Task Management App using Postman/Newman",
+  "main": "run_postman_tests.js",
+  "scripts": {
+    "test": "node run_postman_tests.js local",
+    "test:local": "node run_postman_tests.js local",
+    "test:production": "node run_postman_tests.js production",
+    "install-newman": "npm install -g newman newman-reporter-html newman-reporter-htmlextra",
+    "setup": "npm run install-newman && mkdir -p test-reports",
+    "clean": "rm -rf test-reports/*",
+    "open-report": "open test-reports/api-test-report.html || xdg-open test-reports/api-test-report.html"
+  },
+  "keywords": [
+    "api",
+    "testing",
+    "postman",
+    "newman",
+    "laravel",
+    "task-management"
+  ],
+  "author": "Task Management App Team",
+  "license": "MIT",
+  "devDependencies": {
+    "newman": "^6.0.0",
+    "newman-reporter-html": "^1.0.5",
+    "newman-reporter-htmlextra": "^1.23.0"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-org/task-management-app.git"
+  },
+  "bugs": {
+    "url": "https://github.com/your-org/task-management-app/issues"
+  },
+  "homepage": "https://github.com/your-org/task-management-app#readme"
+}

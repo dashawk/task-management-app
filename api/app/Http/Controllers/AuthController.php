@@ -2,66 +2,71 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\User;
+use App\Http\Requests\Auth\LoginRequest;
+use App\Http\Requests\Auth\RegisterRequest;
+use App\Http\Resources\UserResource;
+use App\Http\Traits\ApiResponseTrait;
+use App\Repositories\Contracts\UserRepositoryInterface;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class AuthController extends Controller
 {
-    public function register(Request $request)
+    use ApiResponseTrait;
+
+    protected UserRepositoryInterface $userRepository;
+
+    public function __construct(UserRepositoryInterface $userRepository)
     {
-        $fields = $request->validate([
-            'name' => 'required|string|max:55',
-            'email' => 'required|string|unique:users,email',
-            'password' => 'required|min:6|confirmed',
-        ]);
-
-        $user = User::create([
-            'name' => $fields['name'],
-            'email' => $fields['email'],
-            'password' => bcrypt($fields['password']),
-        ]);
-
-        return response()->json([
-            'success' => true,
-            'message' => 'User registered successfully',
-            'user' => $user,
-        ], 201);
+        $this->userRepository = $userRepository;
     }
 
-    public function login(Request $request)
+    public function register(RegisterRequest $request): JsonResponse
     {
-        $fields = $request->validate([
-            'email' => 'required|email',
-            'password' => 'required|min:6',
-        ]);
+        $user = $this->userRepository->create($request->validated());
 
-        if (!Auth::attempt($fields)) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Invalid credentials',
-            ], 401);
+        return $this->successResponse(
+            new UserResource($user),
+            'User registered successfully',
+            201
+        );
+    }
+
+    public function login(LoginRequest $request): JsonResponse
+    {
+        if (!Auth::attempt($request->validated())) {
+            return $this->unauthorizedResponse('Invalid credentials');
         }
 
-        $request->session()->regenerate();
+        // Regenerate session for security (if session exists)
+        if ($request->hasSession()) {
+            $request->session()->regenerate();
+        }
 
-        return response()->json([
-            'success' => true,
-            'message' => 'User logged in successfully',
-            'user' => Auth::user(),
-        ], 200);
+        return $this->successResponse(
+            new UserResource(Auth::user()),
+            'User logged in successfully'
+        );
     }
 
-    public function logout(Request $request)
+    public function logout(Request $request): JsonResponse
     {
-        Auth::logout();
+        // For SPA authentication, we revoke the current access token if it exists
+        $token = $request->user()->currentAccessToken();
+        if ($token) {
+            $token->delete();
+        }
 
-        $request->session()->invalidate();
-        $request->session()->regenerateToken();
+        // Also invalidate session if it exists
+        if ($request->hasSession()) {
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+        }
 
-        return response()->json([
-            'success' => true,
-            'message' => 'User logged out successfully',
-        ], 200);
+        return $this->successResponse(
+            null,
+            'User logged out successfully'
+        );
     }
 }
