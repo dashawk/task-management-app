@@ -18,7 +18,8 @@
 import type { Task } from '~~/types/task-management'
 
 definePageMeta({
-  layout: 'default'
+  layout: 'default',
+  middleware: 'sanctum:auth'
 })
 
 // Reactive state

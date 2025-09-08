@@ -1,16 +1,16 @@
 services:
-    client:
-        build:
-            context: '../client'
-            dockerfile: Dockerfile
-        image: 'task-management-client'
-        ports:
-            - '${CLIENT_PORT:-3000}:3000'
-            - '${CLIENT_HMR_PORT:-24678}:24678'
-        networks:
-            - sail
-        depends_on:
-            - laravel.test
+    # client:
+    #     build:
+    #         context: '../client'
+    #         dockerfile: Dockerfile
+    #     image: 'task-management-client'
+    #     ports:
+    #         - '${CLIENT_PORT:-3000}:3000'
+    #         - '${CLIENT_HMR_PORT:-24678}:24678'
+    #     networks:
+    #         - sail
+    #     depends_on:
+    #         - laravel.test
     laravel.test:
         build:
             context: './vendor/laravel/sail/runtimes/8.4'

@@ -60,6 +60,7 @@
 import { Mail, Lock } from 'lucide-vue-next'
 
 definePageMeta({
-  layout: 'auth'
+  layout: 'auth',
+  middleware: 'sanctum:guest'
 })
 </script>

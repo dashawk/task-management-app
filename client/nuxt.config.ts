@@ -1,6 +1,4 @@
 import tailwindcss from '@tailwindcss/vite'
-import { defineNuxtConfig } from 'nuxt/config'
-
 
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
@@ -46,8 +44,26 @@ export default defineNuxtConfig({
   // Enable file watching
   watch: ['~/pages/**/*', '~/components/**/*', '~/layouts/**/*', '~/assets/**/*'],
 
-  modules: ['@nuxt/image', 'nuxt-auth-sanctum'],
-  sanctum: {
-    baseUrl: 'http://localhost'
+  modules: [
+    '@nuxt/image',
+    ['nuxt-auth-sanctum', {
+      baseUrl: 'http://localhost',
+      endpoints: {
+        login: '/api/login',
+        logout: '/api/logout',
+        user: '/api/v1/user',
+        csrf: '/sanctum/csrf-cookie',
+      },
+      mode: 'cookie',
+      redirect: {
+        onLogin: '/',
+        onLogout: '/login'
+      }
+    }]
+  ],
+  runtimeConfig: {
+    public: {
+      baseUrl: 'http://localhost'
+    }
   }
 })
