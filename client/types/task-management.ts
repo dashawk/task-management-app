@@ -14,6 +14,7 @@ export interface DateItem {
   date: Date
   isToday?: boolean
   isYesterday?: boolean
+  isHeader?: boolean
   taskCount?: number
 }
 
@@ -35,9 +36,9 @@ export interface TaskManagementLayoutProps {
 
 export interface TaskInputEmits {
   'update:modelValue': [value: string]
-  'submit': [value: string]
-  'focus': []
-  'blur': []
+  submit: [value: string]
+  focus: []
+  blur: []
 }
 
 export interface DateSidebarEmits {

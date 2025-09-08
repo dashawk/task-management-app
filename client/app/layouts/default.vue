@@ -19,9 +19,8 @@
 </template>
 
 <script setup lang="ts">
-// Auth store
-const { logout } = useAuthStore()
-const user = useAuthStore().user
+const authStore = useAuthStore()
+const { logout, user } = authStore
 
 // Event handlers
 const handleSearch = (query: string) => {
@@ -50,7 +49,6 @@ const handleSettingsClick = () => {
 const handleLogout = async () => {
   try {
     await logout()
-    // nuxt-auth-sanctum will handle the redirect to /login
   } catch (error) {
     console.error('Logout failed:', error)
   }

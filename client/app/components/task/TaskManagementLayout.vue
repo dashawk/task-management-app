@@ -109,39 +109,38 @@ const taskInputPlaceholder = computed(() => {
   if (selectedDate.value.toDateString() === today.toDateString()) {
     return 'Write the task you plan to do today here...'
   }
+  return 'Write what you planned for this day...'
+})
 
-  // Auto-scroll helpers
-  const scrollToBottom = (smooth = true) => {
-    nextTick(() => {
-      if (taskListScrollRef.value) {
-        taskListScrollRef.value.scrollTo({
-          top: taskListScrollRef.value.scrollHeight,
-          behavior: smooth ? 'smooth' : 'auto'
-        })
-      } else if (bottomAnchorRef.value) {
-        bottomAnchorRef.value.scrollIntoView({ behavior: smooth ? 'smooth' : 'auto' })
-      }
-    })
-  }
-
-  onMounted(() => {
-    // Ensure latest items visible on initial render
-    scrollToBottom(false)
-  })
-
-  // Scroll to latest whenever the filtered list changes (e.g., new task added)
-  watch(filteredTasks, (newVal, oldVal) => {
-    if (!oldVal || newVal.length >= oldVal.length) {
-      scrollToBottom(true)
+// Auto-scroll helpers
+const scrollToBottom = (smooth = true) => {
+  nextTick(() => {
+    if (taskListScrollRef.value) {
+      taskListScrollRef.value.scrollTo({
+        top: taskListScrollRef.value.scrollHeight,
+        behavior: smooth ? 'smooth' : 'auto'
+      })
+    } else if (bottomAnchorRef.value) {
+      bottomAnchorRef.value.scrollIntoView({ behavior: smooth ? 'smooth' : 'auto' })
     }
   })
+}
 
-  // When switching dates, jump to bottom without animation
-  watch(selectedDate, () => {
-    scrollToBottom(false)
-  })
+onMounted(() => {
+  // Ensure latest items visible on initial render
+  scrollToBottom(false)
+})
 
-  return 'Write what you planned for this day...'
+// Scroll to latest whenever the filtered list changes (e.g., new task added)
+watch(filteredTasks, (newVal, oldVal) => {
+  if (!oldVal || newVal.length >= oldVal.length) {
+    scrollToBottom(true)
+  }
+})
+
+// When switching dates, jump to bottom without animation
+watch(selectedDate, () => {
+  scrollToBottom(false)
 })
 
 // Methods

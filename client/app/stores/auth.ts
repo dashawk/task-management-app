@@ -21,8 +21,8 @@ export const useAuthStore = defineStore('auth', () => {
     error: null
   })
 
-  // Get nuxt-auth-sanctum composables
-  const { login: sanctumLogin, logout: sanctumLogout, user: sanctumUser, isAuthenticated } = useSanctumAuth()
+  const sanctumAuth = useSanctumAuth()
+  const { login: sanctumLogin, logout: sanctumLogout, user: sanctumUser, isAuthenticated } = sanctumAuth
 
   // Computed
   const user = computed(() => state.user || sanctumUser.value)
@@ -38,7 +38,7 @@ export const useAuthStore = defineStore('auth', () => {
 
       // Use nuxt-auth-sanctum login
       await sanctumLogin(credentials)
-      
+
       // Update local state with user data
       if (sanctumUser.value) {
         state.user = sanctumUser.value as User
@@ -48,7 +48,7 @@ export const useAuthStore = defineStore('auth', () => {
       state.error = null
     } catch (err: any) {
       console.error('Login error:', err)
-      
+
       // Handle different types of errors
       if (err?.data?.message) {
         state.error = err.data.message
@@ -57,7 +57,7 @@ export const useAuthStore = defineStore('auth', () => {
       } else {
         state.error = 'Login failed. Please check your credentials and try again.'
       }
-      
+
       throw err
     } finally {
       state.isLoading = false
@@ -69,11 +69,9 @@ export const useAuthStore = defineStore('auth', () => {
       state.isLoading = true
       state.error = null
 
-      console.log('Logging out...')
-
       // Use nuxt-auth-sanctum logout
       await sanctumLogout()
-      
+
       // Clear local state
       state.user = null
     } catch (err: any) {
@@ -113,13 +111,17 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   // Watch for changes in sanctum user state
-  watch(sanctumUser, (newUser) => {
-    if (newUser) {
-      state.user = newUser as User
-    } else {
-      state.user = null
-    }
-  }, { immediate: true })
+  watch(
+    sanctumUser,
+    newUser => {
+      if (newUser) {
+        state.user = newUser as User
+      } else {
+        state.user = null
+      }
+    },
+    { immediate: true }
+  )
 
   // Initialize on store creation
   initialize()
@@ -130,7 +132,7 @@ export const useAuthStore = defineStore('auth', () => {
     isLoggedIn,
     isLoading,
     error,
-    
+
     // Actions
     login,
     logout,

@@ -6,6 +6,9 @@
       type="button"
       :class="avatarClasses"
       @click="toggleDropdown"
+      @keydown.enter="toggleDropdown"
+      @keydown.space.prevent="toggleDropdown"
+      @keydown.escape="closeDropdown"
       :aria-expanded="isDropdownOpen"
       aria-haspopup="true"
     >
@@ -27,6 +30,7 @@
     >
       <div
         v-if="showDropdown && isDropdownOpen"
+        ref="dropdownContainer"
         class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg border border-gray-200 py-1 z-50"
         role="menu"
         aria-orientation="vertical"
@@ -99,6 +103,7 @@ const emit = defineEmits<UserAvatarEmits>()
 
 // Template refs
 const avatarButton = ref<HTMLButtonElement>()
+const dropdownContainer = ref<HTMLDivElement>()
 
 // Reactive state
 const isDropdownOpen = ref(false)
@@ -147,7 +152,13 @@ const handleLogoutClick = () => {
 
 // Click outside to close dropdown
 const handleClickOutside = (event: Event) => {
-  if (avatarButton.value && !avatarButton.value.contains(event.target as Node)) {
+  const target = event.target as Node
+  if (!target) return
+
+  const isClickInsideButton = avatarButton.value?.contains(target)
+  const isClickInsideDropdown = dropdownContainer.value?.contains(target)
+
+  if (!isClickInsideButton && !isClickInsideDropdown) {
     closeDropdown()
   }
 }

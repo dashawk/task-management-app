@@ -1,20 +1,16 @@
 <template>
   <aside class="w-64 bg-white border-r border-gray-200 h-full overflow-y-auto">
     <div class="p-4">
-      <!-- Header with refresh icon -->
-      <div class="flex items-center justify-between mb-6">
-        <button type="button" class="p-2 text-gray-400 hover:text-gray-600 transition-colors" @click="refreshDates">
-          <RefreshCw :size="20" />
-        </button>
-        <button type="button" class="p-2 text-gray-400 hover:text-gray-600 transition-colors">
-          <User :size="20" />
-        </button>
-      </div>
-
-      <!-- Date Navigation -->
       <nav class="space-y-1">
         <div v-for="dateItem in dateItems" :key="dateItem.id" class="group">
+          <!-- Header items (non-clickable, muted, smaller font) -->
+          <div v-if="dateItem.isHeader" class="px-3 py-2 text-xs font-medium text-gray-400 uppercase tracking-wide">
+            {{ dateItem.label }}
+          </div>
+
+          <!-- Regular date items (clickable) -->
           <button
+            v-else
             type="button"
             class="w-full text-left px-3 py-2 rounded-lg text-sm transition-colors"
             :class="[isSelected(dateItem.date) ? 'bg-black text-white' : 'text-gray-700 hover:bg-gray-100']"
@@ -38,7 +34,6 @@
 </template>
 
 <script setup lang="ts">
-import { RefreshCw, User } from 'lucide-vue-next'
 import type { DateItem } from '~~/types/task-management'
 
 interface Props {
@@ -112,8 +107,9 @@ const dateItems = computed<DateItem[]>(() => {
     // Add week header
     items.push({
       id: `week-${week}-header`,
-      label: getWeekLabel(weekStart),
+      label: getWeekLabel(weekStart, week),
       date: weekStart,
+      isHeader: true,
       taskCount: 0
     })
 
@@ -143,18 +139,29 @@ const formatDateLabel = (date: Date): string => {
   return date.toLocaleDateString('en-US', options)
 }
 
-const getWeekLabel = (weekStart: Date): string => {
+const getWeekLabel = (weekStart: Date, weekNumber: number): string => {
+  if (weekNumber === 1) {
+    return 'Last Week'
+  }
+
+  // Get the month name for the week
   const weekEnd = new Date(weekStart)
   weekEnd.setDate(weekStart.getDate() + 6)
 
-  const startMonth = weekStart.toLocaleDateString('en-US', { month: 'long' })
-  const endMonth = weekEnd.toLocaleDateString('en-US', { month: 'long' })
+  // Use the month that contains most of the week (middle of the week)
+  const midWeek = new Date(weekStart)
+  midWeek.setDate(weekStart.getDate() + 3)
+  const monthName = midWeek.toLocaleDateString('en-US', { month: 'long' })
 
-  if (startMonth === endMonth) {
-    return `${weekStart.getDate()}-${weekEnd.getDate()} ${startMonth}`
-  } else {
-    return `${weekStart.getDate()} ${startMonth} - ${weekEnd.getDate()} ${endMonth}`
+  // Generate ordinal number (2nd, 3rd, 4th, etc.)
+  const getOrdinal = (num: number): string => {
+    const suffix = ['th', 'st', 'nd', 'rd']
+    const value = num % 100
+    const index = (value - 20) % 10
+    return num + (suffix[index] || suffix[value] || suffix[0] || 'th')
   }
+
+  return `${getOrdinal(weekNumber)} Week of ${monthName}`
 }
 
 const isSelected = (date: Date): boolean => {
