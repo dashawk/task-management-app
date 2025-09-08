@@ -6,6 +6,7 @@ use App\Repositories\Contracts\BaseRepositoryInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
 
 abstract class BaseRepository implements BaseRepositoryInterface
 {
@@ -55,18 +56,20 @@ abstract class BaseRepository implements BaseRepositoryInterface
     }
 
     /**
-     * Create a new record
+     * Create a new record (transactional)
      *
      * @param array $data
      * @return Model
      */
     public function create(array $data): Model
     {
-        return $this->model->create($data);
+        return DB::transaction(function () use ($data) {
+            return $this->model->create($data);
+        });
     }
 
     /**
-     * Update a record
+     * Update a record (transactional)
      *
      * @param Model $model
      * @param array $data
@@ -74,19 +77,23 @@ abstract class BaseRepository implements BaseRepositoryInterface
      */
     public function update(Model $model, array $data): Model
     {
-        $model->update($data);
-        return $model->fresh();
+        return DB::transaction(function () use ($model, $data) {
+            $model->update($data);
+            return $model->fresh();
+        });
     }
 
     /**
-     * Delete a record
+     * Delete a record (transactional)
      *
      * @param Model $model
      * @return bool
      */
     public function delete(Model $model): bool
     {
-        return $model->delete();
+        return DB::transaction(function () use ($model) {
+            return $model->delete();
+        });
     }
 
     /**

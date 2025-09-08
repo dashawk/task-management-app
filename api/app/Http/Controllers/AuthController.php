@@ -7,9 +7,11 @@ use App\Http\Requests\Auth\RegisterRequest;
 use App\Http\Resources\UserResource;
 use App\Http\Traits\ApiResponseTrait;
 use App\Repositories\Contracts\UserRepositoryInterface;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class AuthController extends Controller
 {
@@ -24,7 +26,20 @@ class AuthController extends Controller
 
     public function register(RegisterRequest $request): JsonResponse
     {
-        $user = $this->userRepository->create($request->validated());
+        try {
+            $user = $this->userRepository->create($request->validated());
+        } catch (QueryException $e) {
+            $sqlState = $e->errorInfo[0] ?? null;
+            $driverCode = $e->errorInfo[1] ?? null;
+            if (in_array($sqlState, ['23000', '23505'], true) || in_array((int) $driverCode, [1062, 19], true)) {
+                return $this->errorResponse('The email has already been taken.', 409);
+            }
+            Log::error('Failed to register user (DB)', ['exception' => $e]);
+            return $this->errorResponse('Failed to register user', 500);
+        } catch (\Throwable $e) {
+            Log::error('Failed to register user', ['exception' => $e]);
+            return $this->errorResponse('Failed to register user', 500);
+        }
 
         return $this->successResponse(
             new UserResource($user),
@@ -52,8 +67,13 @@ class AuthController extends Controller
 
     public function logout(Request $request): JsonResponse
     {
+        $user = $request->user();
+        if (!$user) {
+            return $this->unauthorizedResponse('Not authenticated');
+        }
+
         // For SPA authentication, we revoke the current access token if it exists
-        $token = $request->user()->currentAccessToken();
+        $token = $user->currentAccessToken();
         if ($token) {
             $token->delete();
         }

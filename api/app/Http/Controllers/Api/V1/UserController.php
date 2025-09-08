@@ -10,8 +10,10 @@ use App\Http\Resources\UserResource;
 use App\Models\User;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use App\Repositories\Contracts\UserRepositoryInterface;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class UserController extends BaseApiController
 {
@@ -29,13 +31,18 @@ class UserController extends BaseApiController
      */
     public function index(Request $request): JsonResponse
     {
-        $perPage = $request->get('per_page', 15);
-        $search = $request->get('search');
+        try {
+            $perPage = (int) $request->get('per_page', 15);
+            $search = $request->get('search');
 
-        if ($search) {
-            $users = $this->userRepository->search($search, $perPage);
-        } else {
-            $users = $this->userRepository->all($perPage);
+            if ($search) {
+                $users = $this->userRepository->search($search, $perPage);
+            } else {
+                $users = $this->userRepository->all($perPage);
+            }
+        } catch (\Throwable $e) {
+            Log::error('Failed to retrieve users', ['exception' => $e]);
+            return $this->errorResponse('Failed to retrieve users', 500);
         }
 
         return $this->successResponse(
@@ -49,7 +56,20 @@ class UserController extends BaseApiController
      */
     public function store(StoreUserRequest $request): JsonResponse
     {
-        $user = $this->userRepository->create($request->validated());
+        try {
+            $user = $this->userRepository->create($request->validated());
+        } catch (QueryException $e) {
+            $sqlState = $e->errorInfo[0] ?? null;
+            $driverCode = $e->errorInfo[1] ?? null;
+            if (in_array($sqlState, ['23000', '23505'], true) || in_array((int) $driverCode, [1062, 19], true)) {
+                return $this->errorResponse('The email has already been taken.', 409);
+            }
+            Log::error('Failed to create user (DB)', ['exception' => $e]);
+            return $this->errorResponse('Failed to create user', 500);
+        } catch (\Throwable $e) {
+            Log::error('Failed to create user', ['exception' => $e]);
+            return $this->errorResponse('Failed to create user', 500);
+        }
 
         return $this->successResponse(
             new UserResource($user),
@@ -76,7 +96,20 @@ class UserController extends BaseApiController
      */
     public function update(UpdateUserRequest $request, User $user): JsonResponse
     {
-        $updatedUser = $this->userRepository->update($user, $request->validated());
+        try {
+            $updatedUser = $this->userRepository->update($user, $request->validated());
+        } catch (QueryException $e) {
+            $sqlState = $e->errorInfo[0] ?? null;
+            $driverCode = $e->errorInfo[1] ?? null;
+            if (in_array($sqlState, ['23000', '23505'], true) || in_array((int) $driverCode, [1062, 19], true)) {
+                return $this->errorResponse('The email has already been taken.', 409);
+            }
+            Log::error('Failed to update user (DB)', ['exception' => $e]);
+            return $this->errorResponse('Failed to update user', 500);
+        } catch (\Throwable $e) {
+            Log::error('Failed to update user', ['exception' => $e]);
+            return $this->errorResponse('Failed to update user', 500);
+        }
 
         return $this->successResponse(
             new UserResource($updatedUser),
@@ -91,7 +124,12 @@ class UserController extends BaseApiController
     {
         $this->authorize('delete', $user);
 
-        $this->userRepository->delete($user);
+        try {
+            $this->userRepository->delete($user);
+        } catch (\Throwable $e) {
+            Log::error('Failed to delete user', ['exception' => $e]);
+            return $this->errorResponse('Failed to delete user', 500);
+        }
 
         return $this->successResponse(
             null,

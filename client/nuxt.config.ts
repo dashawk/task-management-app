@@ -46,5 +46,8 @@ export default defineNuxtConfig({
   // Enable file watching
   watch: ['~/pages/**/*', '~/components/**/*', '~/layouts/**/*', '~/assets/**/*'],
 
-  modules: ['@nuxt/image'],
+  modules: ['@nuxt/image', 'nuxt-auth-sanctum'],
+  sanctum: {
+    baseUrl: 'http://localhost'
+  }
 })
