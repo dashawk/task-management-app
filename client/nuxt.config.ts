@@ -41,6 +41,7 @@ export default defineNuxtConfig({
   components: [
     {path: '~/components/layout', pathPrefix: false},
     {path: '~/components/ui', pathPrefix: false},
+    {path: '~/components/task', pathPrefix: false},
   ],
 
   // Enable file watching
