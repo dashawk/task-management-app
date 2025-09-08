@@ -35,26 +35,15 @@
 
           <!-- Fixed input area at bottom - always at viewport bottom -->
           <div class="flex-shrink-0 p-8 pt-6 bg-white border-t border-gray-100">
-            <div class="relative">
-              <input
-                ref="addTaskInputRef"
-                v-model="newTaskInput"
-                type="text"
-                placeholder="What else do you need to do?"
-                class="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                @keydown.enter="handleTaskSubmit"
-                @focus="handleTaskInputFocus"
-                @blur="handleTaskInputBlur"
-              />
-              <button
-                v-if="newTaskInput.trim()"
-                type="button"
-                class="absolute right-3 top-1/2 transform -translate-y-1/2 w-8 h-8 bg-black text-white rounded-full flex items-center justify-center hover:bg-gray-800 transition-colors duration-200"
-                @click="handleTaskSubmit"
-              >
-                <ArrowUp :size="16" />
-              </button>
-            </div>
+            <TaskInput
+              v-model="newTaskInput"
+              :title="''"
+              placeholder="What else do you need to do?"
+              compact
+              @submit="handleTaskSubmit"
+              @focus="handleTaskInputFocus"
+              @blur="handleTaskInputBlur"
+            />
           </div>
         </template>
       </div>
@@ -63,7 +52,6 @@
 </template>
 
 <script setup lang="ts">
-import { ArrowUp } from 'lucide-vue-next'
 import type { DateItem, Task } from '~~/types/task-management'
 
 interface Props {
@@ -90,7 +78,6 @@ const emit = defineEmits<{
 // Reactive state
 const selectedDate = ref(props.selectedDate)
 const newTaskInput = ref('')
-const addTaskInputRef = ref<HTMLInputElement>()
 const taskListScrollRef = ref<HTMLDivElement>()
 const bottomAnchorRef = ref<HTMLDivElement>()
 

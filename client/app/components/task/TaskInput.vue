@@ -1,5 +1,5 @@
 <template>
-  <div class="flex flex-col items-center justify-center min-h-[60vh] px-8">
+  <div v-if="!compact" class="flex flex-col items-center justify-center min-h-[60vh] px-8">
     <!-- Title -->
     <h1 class="text-3xl font-semibold text-gray-900 mb-8 text-center">
       {{ title }}
@@ -47,6 +47,28 @@
       </button>
     </div>
   </div>
+
+  <!-- Compact mode for fixed footer usage -->
+  <div v-else class="relative">
+    <input
+      ref="inputRef"
+      v-model="inputValue"
+      type="text"
+      :placeholder="placeholder"
+      class="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent pr-12"
+      @keydown.enter="handleSubmit"
+      @focus="handleFocus"
+      @blur="handleBlur"
+    />
+    <button
+      v-if="inputValue.trim()"
+      type="button"
+      class="absolute right-3 top-1/2 transform -translate-y-1/2 w-8 h-8 bg-black text-white rounded-full flex items-center justify-center hover:bg-gray-800 transition-colors duration-200"
+      @click="handleSubmit"
+    >
+      <ArrowUp :size="16" />
+    </button>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -55,12 +77,14 @@ interface Props {
   placeholder?: string
   title?: string
   modelValue?: string
+  compact?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
   placeholder: 'Write the task you plan to do today here...',
   title: 'What do you have in mind?',
-  modelValue: ''
+  modelValue: '',
+  compact: false
 })
 
 const emit = defineEmits<{

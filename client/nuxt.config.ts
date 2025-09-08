@@ -7,7 +7,6 @@ export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
   devtools: { enabled: true },
   css: ['~/assets/css/main.css'],
-
   pages: true,
 
   // Auto-import configuration
@@ -46,4 +45,6 @@ export default defineNuxtConfig({
 
   // Enable file watching
   watch: ['~/pages/**/*', '~/components/**/*', '~/layouts/**/*', '~/assets/**/*'],
+
+  modules: ['@nuxt/image'],
 })
