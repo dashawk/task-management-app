@@ -10,7 +10,7 @@ Route::middleware('throttle.auth')->group(function () {
     Route::post('/register', [AuthController::class, 'register']);
     Route::post('/login', [AuthController::class, 'login']);
 });
-Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth:sanctum');
+Route::post('/logout', [AuthController::class, 'logout']);
 
 // API v1 routes
 Route::prefix('v1')->name('api.v1.')->group(function () {
