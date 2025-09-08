@@ -1,0 +1,35 @@
+<template>
+  <div class="flex-shrink-0 cursor-pointer">
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 500 500"
+      :class="[props.size, props.width, props.height]"
+      aria-label="Logo"
+    >
+      <defs>
+        <image
+          width="520"
+          height="568"
+          id="img1"
+          href="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBzdGFuZGFsb25lPSJubyI/Pgo8IURPQ1RZUEUgc3ZnIFBVQkxJQyAiLS8vVzNDLy9EVEQgU1ZHIDIwMDEwOTA0Ly9FTiIKICJodHRwOi8vd3d3LnczLm9yZy9UUi8yMDAxL1JFQy1TVkctMjAwMTA5MDQvRFREL3N2ZzEwLmR0ZCI+CjxzdmcgdmVyc2lvbj0iMS4wIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciCiB3aWR0aD0iNjUuMDAwMDAwcHQiIGhlaWdodD0iNzEuMDAwMDAwcHQiIHZpZXdCb3g9IjAgMCA2NS4wMDAwMDAgNzEuMDAwMDAwIgogcHJlc2VydmVBc3BlY3RSYXRpbz0ieE1pZFlNaWQgbWVldCI+CjxtZXRhZGF0YT4KQ3JlYXRlZCBieSBwb3RyYWNlIDEuMTYsIHdyaXR0ZW4gYnkgUGV0ZXIgU2VsaW5nZXIgMjAwMS0yMDE5CjwvbWV0YWRhdGE+CjxnIHRyYW5zZm9ybT0idHJhbnNsYXRlKDAuMDAwMDAwLDcxLjAwMDAwMCkgc2NhbGUoMC4xMDAwMDAsLTAuMTAwMDAwKSIKZmlsbD0iIzAwMDAwMCIgc3Ryb2tlPSJub25lIj4KPHBhdGggZD0iTTI1MCA1NDQgYzAgLTQgMTMgLTI4IDI4IC01MyAxNiAtMjUgMzEgLTUzIDM1IC02MSA0IC04IDIzIC00MCA0MgotNzAgbDM1IC01NSAtNjYgLTMgYy0zNyAtMiAtNjggLTEgLTcxIDEgLTIgMyAxMCAyNyAyNiA1NSAxNyAyNyAzMSA1MiAzMSA1NgowIDMgLTMxIDYgLTY4IDYgbC02OCAwIC0zMyAtNjMgLTM0IC02MiAzMiAtNTMgYzE4IC0yOCAzNCAtNTIgMzYgLTUyIDIgMCAxNwoyMyAzNCA1MCAxNyAyOCAzNiA0OCA0MSA0NSA1IC0zIDIyIC0yOCAzNyAtNTUgbDI4IC01MCA3OCAwIDc3IDAgMzUgNTUgYzE5CjMwIDM1IDU3IDM1IDYwIDAgMyAtMzIgNSAtNzEgNSBsLTcxIDAgMjggNDggYzE1IDI2IDMyIDU0IDM3IDYyIDYgMTEgLTIgMzMKLTI4IDc4IGwtMzcgNjIgLTc0IDAgYy00MSAwIC03NCAtMyAtNzQgLTZ6Ii8+CjwvZz4KPC9zdmc+Cg=="
+        />
+      </defs>
+      <use id="image" href="#img1" transform="matrix(1.303,0,0,1.303,-89,-120)" />
+    </svg>
+  </div>
+</template>
+
+<script setup lang="ts">
+const props = withDefaults(
+  defineProps<{
+    size?: string
+    width?: string
+    height?: string
+  }>(),
+  {
+    size: 'h8',
+    width: 'w-auto',
+    height: ''
+  }
+)
+</script>

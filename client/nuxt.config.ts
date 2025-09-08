@@ -9,6 +9,14 @@ export default defineNuxtConfig({
   css: ['~/assets/css/main.css'],
 
   pages: true,
+
+  // Auto-import configuration
+  // imports: {
+  //   dirs: [
+  //     'utils/**'
+  //   ]
+  // },
+
   // Development server configuration
   devServer: {
     host: '0.0.0.0', // Allow external connections (important for Docker)
@@ -29,6 +37,11 @@ export default defineNuxtConfig({
       },
     },
   },
+
+  components: [
+    {path: '~/components/layout', pathPrefix: false},
+    {path: '~/components/ui', pathPrefix: false},
+  ],
 
   // Enable file watching
   watch: ['~/pages/**/*', '~/components/**/*', '~/layouts/**/*', '~/assets/**/*'],
