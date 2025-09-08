@@ -76,8 +76,16 @@
 
 <script setup lang="ts">
 import { User, Settings, LogOut } from 'lucide-vue-next'
-import { SIZE_CLASSES, type UserAvatarEmits, type UserAvatarProps } from '~~/types/navigation'
-// Global types and constants are now available without imports
+import type { UserAvatarEmits, UserAvatarProps } from '~~/types/navigation'
+
+// Size classes for avatar
+const SIZE_CLASSES = {
+  avatar: {
+    sm: 'w-8 h-8',
+    md: 'w-10 h-10',
+    lg: 'w-12 h-12'
+  }
+} as const
 
 // Props with defaults
 const props = withDefaults(defineProps<UserAvatarProps>(), {
