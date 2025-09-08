@@ -72,12 +72,6 @@ class AuthController extends Controller
             return $this->unauthorizedResponse('Not authenticated');
         }
 
-        // For SPA authentication, we revoke the current access token if it exists
-        $token = $user->currentAccessToken();
-        if ($token) {
-            $token->delete();
-        }
-
         // Also invalidate session if it exists
         if ($request->hasSession()) {
             $request->session()->invalidate();

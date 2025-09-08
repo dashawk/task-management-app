@@ -2,14 +2,14 @@
   <div class="min-h-screen bg-gray-50">
     <!-- Navigation Bar -->
     <NavigationBar
-      :user="currentUser"
+      :user="user"
       search-placeholder="Search tasks, projects..."
       :show-search="true"
       @search="handleSearch"
       @logo-click="handleLogoClick"
       @profile-click="handleProfileClick"
       @settings-click="handleSettingsClick"
-      @logout-click="handleLogoutClick"
+      @logout-click="handleLogout"
     />
 
     <!-- Main Content -->
@@ -19,17 +19,9 @@
 </template>
 
 <script setup lang="ts">
-import type { User } from '~~/types/navigation'
-
-// Global types are now available without imports
-
-// Mock user data - replace with actual user data from your auth system
-const currentUser = ref<User>({
-  id: '1',
-  name: 'John Doe',
-  email: 'john.doe@example.com',
-  avatar: '' // Leave empty to show initials
-})
+// Auth store
+const { logout } = useAuthStore()
+const user = useAuthStore().user
 
 // Event handlers
 const handleSearch = (query: string) => {
@@ -55,10 +47,12 @@ const handleSettingsClick = () => {
   // navigateTo('/settings');
 }
 
-const handleLogoutClick = () => {
-  console.log('Logout clicked')
-  // Implement logout functionality
-  // await logout();
-  // navigateTo('/login');
+const handleLogout = async () => {
+  try {
+    await logout()
+    // nuxt-auth-sanctum will handle the redirect to /login
+  } catch (error) {
+    console.error('Logout failed:', error)
+  }
 }
 </script>

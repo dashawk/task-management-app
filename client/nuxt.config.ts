@@ -39,6 +39,7 @@ export default defineNuxtConfig({
     {path: '~/components/layout', pathPrefix: false},
     {path: '~/components/ui', pathPrefix: false},
     {path: '~/components/task', pathPrefix: false},
+    {path: '~/components/auth', pathPrefix: false},
   ],
 
   // Enable file watching
@@ -46,6 +47,7 @@ export default defineNuxtConfig({
 
   modules: [
     '@nuxt/image',
+    '@pinia/nuxt',
     ['nuxt-auth-sanctum', {
       baseUrl: 'http://localhost',
       endpoints: {
