@@ -6,6 +6,7 @@ services:
         image: 'task-management-client'
         ports:
             - '${CLIENT_PORT:-3000}:3000'
+            - '${CLIENT_HMR_PORT:-24678}:24678'
         networks:
             - sail
         depends_on:
