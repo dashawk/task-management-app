@@ -12,11 +12,6 @@
       @drag-over="handleDragOver"
       @drop="handleDrop"
     />
-
-    <!-- Empty State -->
-    <div v-if="tasks.length === 0" class="text-center py-8 text-gray-500">
-      <p class="text-sm">No tasks for this date</p>
-    </div>
   </div>
 </template>
 

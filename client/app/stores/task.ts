@@ -70,8 +70,8 @@ export const useTaskStore = defineStore('task', () => {
       if (response.success) {
         const newTask = transformTaskToDisplay(response.data)
 
-        // Optimistically add to local state
-        state.tasks.unshift(newTask)
+        // Optimistically add to local state (append to bottom)
+        state.tasks.push(newTask)
 
         return newTask
       } else {

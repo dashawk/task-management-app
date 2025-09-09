@@ -1,11 +1,10 @@
 <template>
   <div
-    class="group relative flex items-center p-3 rounded-sm bg-gray-50 hover:bg-gray-100 transition-colors duration-200 cursor-move"
+    class="group relative flex items-center p-3 rounded-sm bg-gray-50 hover:bg-gray-100 transition-colors duration-200"
     :class="{
       'opacity-50 scale-95': isDragging,
       'border-2 border-blue-400 border-dashed bg-blue-50': isDragOver,
-      'cursor-text': isEditing,
-      'cursor-move': !isEditing
+      'cursor-text': isEditing
     }"
     :draggable="!isEditing"
     @dragstart="handleDragStart"
@@ -45,15 +44,6 @@
           @keydown.escape="cancelEdit"
           @blur="saveEdit"
         />
-        <textarea
-          v-if="editDescription !== null"
-          v-model="editDescription"
-          class="w-full text-xs bg-white border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
-          rows="2"
-          @keydown.enter.meta="saveEdit"
-          @keydown.enter.ctrl="saveEdit"
-          @keydown.escape="cancelEdit"
-        />
         <div class="flex items-center space-x-2">
           <button
             type="button"
@@ -73,13 +63,14 @@
       </div>
 
       <!-- Display Mode -->
-      <div v-else @click="startEdit">
+      <div v-else>
         <p
           class="text-sm transition-all duration-200 cursor-pointer hover:bg-gray-100 rounded px-1 py-0.5 -mx-1"
           :class="[
             task.completed ? 'text-gray-500 line-through' : 'text-gray-900',
             isDragging ? 'pointer-events-none' : ''
           ]"
+          @click="startEdit"
         >
           {{ task.title }}
         </p>
@@ -90,6 +81,7 @@
             task.completed ? 'text-gray-400 line-through' : 'text-gray-600',
             isDragging ? 'pointer-events-none' : ''
           ]"
+          @click="startEdit"
         >
           {{ task.description }}
         </p>
@@ -101,8 +93,8 @@
       <!-- Delete button (shown on hover via CSS, space always reserved) -->
       <button
         type="button"
-        class="h-6 w-6 flex items-center justify-center text-gray-400 hover:text-red-500 transition-colors duration-200 rounded-md hover:bg-red-50 opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto"
-        @click="onDelete(task.id.toString())"
+        class="h-6 w-6 flex items-center justify-center text-gray-400 hover:text-red-500 transition-colors duration-200 rounded-md hover:bg-red-50 opacity-0 group-hover:opacity-100 relative z-10"
+        @click.stop="onDelete(task.id.toString())"
         title="Delete task"
       >
         <Trash2 :size="16" />
@@ -142,7 +134,6 @@ const emit = defineEmits<{
 // Editing state
 const isEditing = ref(false)
 const editTitle = ref('')
-const editDescription = ref<string | null>(null)
 const titleInputRef = ref<HTMLInputElement>()
 
 // Drag and drop state
@@ -157,7 +148,6 @@ const startEdit = () => {
 
   isEditing.value = true
   editTitle.value = props.task.title
-  editDescription.value = props.task.description || ''
 
   nextTick(() => {
     titleInputRef.value?.focus()
@@ -179,11 +169,6 @@ const saveEdit = () => {
     title: trimmedTitle
   }
 
-  // Only include description if it was edited
-  if (editDescription.value !== null) {
-    updates.description = editDescription.value.trim() || undefined
-  }
-
   emit('update-task', props.task.id.toString(), updates)
   isEditing.value = false
 }
@@ -191,7 +176,6 @@ const saveEdit = () => {
 const cancelEdit = () => {
   isEditing.value = false
   editTitle.value = ''
-  editDescription.value = null
 }
 
 // Drag and drop handlers

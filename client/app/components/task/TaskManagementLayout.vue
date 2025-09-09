@@ -57,6 +57,7 @@
           <!-- Fixed input area at bottom - always at viewport bottom -->
           <div class="flex-shrink-0 p-8 pt-6 bg-white border-t border-gray-100">
             <TaskInput
+              ref="bottomTaskInputRef"
               v-model="newTaskInput"
               :title="''"
               placeholder="What else do you need to do?"
@@ -109,6 +110,7 @@ const selectedDate = ref(props.selectedDate)
 const newTaskInput = ref('')
 const taskListScrollRef = ref<HTMLDivElement>()
 const bottomAnchorRef = ref<HTMLDivElement>()
+const bottomTaskInputRef = ref()
 
 // Mock data - replace with actual data
 const dateItems = ref<DateItem[]>([])
@@ -229,6 +231,13 @@ const handleReorderTasks = (draggedTaskId: string, targetTaskId: string) => {
   emit('reorder-tasks', draggedTaskId, targetTaskId)
 }
 
+// Method to focus the bottom input
+const focusBottomInput = () => {
+  nextTick(() => {
+    bottomTaskInputRef.value?.focus()
+  })
+}
+
 // Watch for external prop changes
 watch(
   () => props.selectedDate,
@@ -245,4 +254,9 @@ watch(
     }
   }
 )
+
+// Expose methods to parent components
+defineExpose({
+  focusBottomInput
+})
 </script>

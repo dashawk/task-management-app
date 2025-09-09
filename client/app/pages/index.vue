@@ -30,6 +30,7 @@
     </div>
 
     <TaskManagementLayout
+      ref="taskManagementLayoutRef"
       :has-tasks="hasTasks"
       :selected-date="selectedDate"
       :tasks="tasks"
@@ -60,6 +61,7 @@ const taskStore = useTaskStore()
 // Reactive state
 const selectedDate = ref(new Date())
 const isSubmitting = ref(false)
+const taskManagementLayoutRef = ref()
 
 // Computed properties
 const tasks = computed(() => taskStore.getTasksForDate(selectedDate.value))
@@ -70,6 +72,8 @@ const error = computed(() => taskStore.error)
 // Event handlers
 const handleTaskSubmit = async (taskTitle: string) => {
   if (isSubmitting.value) return
+
+  const wasEmpty = !hasTasks.value
 
   try {
     isSubmitting.value = true
@@ -82,6 +86,13 @@ const handleTaskSubmit = async (taskTitle: string) => {
     })
 
     console.log('Task created successfully')
+
+    // Focus the bottom input after successful task creation
+    if (wasEmpty) {
+      nextTick(() => {
+        taskManagementLayoutRef.value?.focusBottomInput()
+      })
+    }
   } catch (error) {
     console.error('Failed to create task:', error)
     // Error is handled by the store and can be displayed in UI
