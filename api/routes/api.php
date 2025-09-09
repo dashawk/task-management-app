@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\V1\TaskController;
 use App\Http\Controllers\Api\V1\UserController;
 use App\Http\Controllers\AuthController;
 use Illuminate\Http\Request;
@@ -23,6 +24,11 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
 
         // Resource routes
         Route::apiResource('users', UserController::class);
+        Route::apiResource('tasks', TaskController::class);
+
+        // Additional task routes
+        Route::patch('/tasks/{task}/toggle-completion', [TaskController::class, 'toggleCompletion'])
+            ->name('tasks.toggle-completion');
     });
 });
 
