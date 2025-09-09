@@ -90,11 +90,33 @@
 
     <!-- Right-side actions/time: no layout shift on hover -->
     <div class="flex-shrink-0 ml-3 h-6 relative flex items-center">
+      <!-- Inline delete confirmation overlay -->
+      <div v-if="confirmingDelete" class="absolute inset-y-0 right-0 flex items-center z-20">
+        <div class="flex items-center gap-2 bg-white border border-gray-200 rounded px-2 py-1 shadow-sm">
+          <span class="text-xs text-gray-600">Delete?</span>
+          <button
+            type="button"
+            class="text-xs px-2 py-0.5 rounded bg-red-500 text-white hover:bg-red-600 transition-colors"
+            @click.stop="confirmDelete(task.id.toString())"
+          >
+            Yes
+          </button>
+          <button
+            type="button"
+            class="text-xs px-2 py-0.5 rounded bg-gray-200 text-gray-700 hover:bg-gray-300 transition-colors"
+            @click.stop="cancelDelete"
+          >
+            No
+          </button>
+        </div>
+      </div>
+
       <!-- Delete button (shown on hover via CSS, space always reserved) -->
       <button
+        v-if="!confirmingDelete"
         type="button"
         class="h-6 w-6 flex items-center justify-center text-gray-400 hover:text-red-500 transition-colors duration-200 rounded-md hover:bg-red-50 opacity-0 group-hover:opacity-100 relative z-10"
-        @click.stop="onDelete(task.id.toString())"
+        @click.stop="startConfirmDelete"
         title="Delete task"
       >
         <Trash2 :size="16" />
@@ -102,8 +124,8 @@
 
       <!-- Task time/date (fades out on hover) -->
       <div
-        v-if="task.createdAt"
-        class="absolute inset-0 flex items-center justify-end text-xs text-gray-400 transition-opacity duration-200 opacity-100 group-hover:opacity-0"
+        v-if="task.createdAt && !confirmingDelete"
+        class="absolute inset-0 flex items-center justify-end whitespace-nowrap text-xs text-gray-400 transition-opacity duration-200 opacity-100 group-hover:opacity-0"
       >
         {{ formatTaskTime(task.createdAt) }}
       </div>
@@ -140,8 +162,20 @@ const titleInputRef = ref<HTMLInputElement>()
 const isDragging = ref(false)
 const isDragOver = ref(false)
 
+// Inline delete confirmation state
+const confirmingDelete = ref(false)
+
 const onToggle = (taskId: string) => emit('toggle-completion', taskId)
-const onDelete = (taskId: string) => emit('delete-task', taskId)
+const startConfirmDelete = () => {
+  confirmingDelete.value = true
+}
+const cancelDelete = () => {
+  confirmingDelete.value = false
+}
+const confirmDelete = (taskId: string) => {
+  emit('delete-task', taskId)
+  confirmingDelete.value = false
+}
 
 const startEdit = () => {
   if (props.task.completed || isDragging.value) return // Don't allow editing completed tasks or during drag

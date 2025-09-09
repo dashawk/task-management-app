@@ -37,8 +37,6 @@
       :is-loading="isLoading"
       @task-submit="handleTaskSubmit"
       @date-select="handleDateSelect"
-      @task-input-focus="handleTaskInputFocus"
-      @task-input-blur="handleTaskInputBlur"
       @toggle-completion="handleToggleCompletion"
       @delete-task="handleDeleteTask"
       @update-task="handleUpdateTask"
@@ -111,14 +109,6 @@ const handleDateSelect = async (date: Date) => {
   } catch (error) {
     console.error('Failed to fetch tasks for date:', error)
   }
-}
-
-const handleTaskInputFocus = () => {
-  console.log('Task input focused')
-}
-
-const handleTaskInputBlur = () => {
-  console.log('Task input blurred')
 }
 
 const handleToggleCompletion = async (taskId: string) => {
