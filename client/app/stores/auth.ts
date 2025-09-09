@@ -1,143 +1,84 @@
 import { defineStore } from 'pinia'
 import type { User } from '~~/types/navigation'
 
-interface LoginCredentials {
+type LoginCredentials = {
   email: string
   password: string
   remember?: boolean
-  [key: string]: unknown
-}
-
-interface AuthState {
-  user: User | null
-  isLoading: boolean
-  error: string | null
 }
 
 export const useAuthStore = defineStore('auth', () => {
-  // State
-  const state = reactive<AuthState>({
-    user: null,
-    isLoading: false,
-    error: null
+  const { login: sanctumLogin, logout: sanctumLogout, user: sanctumUser, isAuthenticated } = useSanctumAuth<User>()
+
+  const rememberPref = useCookie<boolean>('remember_me_pref', {
+    default: () => false,
+    sameSite: 'lax',
+    maxAge: 60 * 60 * 24 * 365 // 1 year
   })
 
-  const sanctumAuth = useSanctumAuth()
-  const { login: sanctumLogin, logout: sanctumLogout, user: sanctumUser, isAuthenticated } = sanctumAuth
+  const isLoading = ref(false)
+  const error = ref<string | null>(null)
 
-  // Computed
-  const user = computed(() => state.user || sanctumUser.value)
-  const isLoggedIn = computed(() => isAuthenticated.value && !!user.value)
-  const isLoading = computed(() => state.isLoading)
-  const error = computed(() => state.error)
+  const user = computed<User | null>(() => sanctumUser.value ?? null)
+  const isLoggedIn = computed<boolean>(() => isAuthenticated.value && !!user.value)
 
-  // Actions
+  const setRemember = (val: boolean) => {
+    rememberPref.value = val
+  }
+
   const login = async (credentials: LoginCredentials) => {
+    isLoading.value = true
+    error.value = null
+
     try {
-      state.isLoading = true
-      state.error = null
-
-      // Use nuxt-auth-sanctum login
-      await sanctumLogin(credentials)
-
-      // Update local state with user data
-      if (sanctumUser.value) {
-        state.user = sanctumUser.value as User
+      const payload = {
+        ...credentials,
+        remember: credentials.remember ?? rememberPref.value
       }
+      await sanctumLogin(payload)
 
-      // Clear any previous errors
-      state.error = null
-    } catch (err: any) {
-      console.error('Login error:', err)
-
-      // Handle different types of errors
-      if (err?.data?.message) {
-        state.error = err.data.message
-      } else if (err?.message) {
-        state.error = err.message
-      } else {
-        state.error = 'Login failed. Please check your credentials and try again.'
-      }
-
+      // Persist latest intent (keep the checkbox state sticky)
+      rememberPref.value = !!payload.remember
+    } catch (err: unknown) {
+      error.value = toMessage(err)
       throw err
     } finally {
-      state.isLoading = false
+      isLoading.value = false
     }
   }
 
   const logout = async () => {
+    isLoading.value = true
+    error.value = null
+
     try {
-      state.isLoading = true
-      state.error = null
-
-      // Use nuxt-auth-sanctum logout
       await sanctumLogout()
-
-      // Clear local state
-      state.user = null
-    } catch (err: any) {
-      console.error('Logout error:', err)
-      state.error = 'Logout failed. Please try again.'
+    } catch (err: unknown) {
+      error.value = toMessage(err)
       throw err
     } finally {
-      state.isLoading = false
-    }
-  }
-
-  const refreshUser = async () => {
-    try {
-      // The nuxt-auth-sanctum composable handles user refresh automatically
-      // We just need to sync our local state
-      if (sanctumUser.value) {
-        state.user = sanctumUser.value as User
-      } else {
-        state.user = null
-      }
-    } catch (err: any) {
-      console.error('Refresh user error:', err)
-      state.user = null
+      isLoading.value = false
     }
   }
 
   const clearError = () => {
-    state.error = null
+    error.value = null
   }
-
-  // Initialize user state on store creation
-  const initialize = () => {
-    // Sync with sanctum user state
-    if (sanctumUser.value) {
-      state.user = sanctumUser.value as User
-    }
-  }
-
-  // Watch for changes in sanctum user state
-  watch(
-    sanctumUser,
-    newUser => {
-      if (newUser) {
-        state.user = newUser as User
-      } else {
-        state.user = null
-      }
-    },
-    { immediate: true }
-  )
-
-  // Initialize on store creation
-  initialize()
 
   return {
-    // State
+    // State (derived from Sanctum)
     user,
     isLoggedIn,
     isLoading,
     error,
 
+    // Persisted preferences
+    rememberPref,
+    setRemember,
+
     // Actions
     login,
     logout,
-    refreshUser,
     clearError
   }
 })

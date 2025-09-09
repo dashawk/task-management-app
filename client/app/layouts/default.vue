@@ -2,7 +2,7 @@
   <div class="min-h-screen bg-gray-50">
     <!-- Navigation Bar -->
     <NavigationBar
-      :user="user"
+      :user="userForNav"
       search-placeholder="Search tasks, projects..."
       :show-search="true"
       @search="handleSearch"
@@ -20,12 +20,17 @@
 
 <script setup lang="ts">
 const authStore = useAuthStore()
-const { logout, user } = authStore
+const { logout } = authStore
+const userForNav = computed<import('~~/types/navigation').User | undefined>(() => (authStore.user as any) ?? undefined)
 
 // Event handlers
-const handleSearch = (query: string) => {
-  console.log('Search query:', query)
-  // Implement search functionality
+const taskStore = useTaskStore()
+const handleSearch = async (query: string) => {
+  await taskStore.setSearchQuery(query)
+  // Ensure results are visible in the main task page
+  if (typeof window !== 'undefined' && window.location.pathname !== '/') {
+    navigateTo('/')
+  }
 }
 
 const handleLogoClick = () => {

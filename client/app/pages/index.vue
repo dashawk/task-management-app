@@ -33,7 +33,7 @@
       ref="taskManagementLayoutRef"
       :has-tasks="hasTasks"
       :selected-date="selectedDate"
-      :tasks="tasks"
+      :tasks="visibleTasks"
       :is-loading="isLoading"
       @task-submit="handleTaskSubmit"
       @date-select="handleDateSelect"
@@ -62,8 +62,10 @@ const isSubmitting = ref(false)
 const taskManagementLayoutRef = ref()
 
 // Computed properties
-const tasks = computed(() => taskStore.getTasksForDate(selectedDate.value))
-const hasTasks = computed(() => tasks.value.length > 0)
+const visibleTasks = computed(() =>
+  taskStore.searchQuery ? taskStore.tasksFilteredByQuery : taskStore.getTasksForDate(selectedDate.value)
+)
+const hasTasks = computed(() => visibleTasks.value.length > 0)
 const isLoading = computed(() => taskStore.isLoading)
 const error = computed(() => taskStore.error)
 
@@ -146,7 +148,7 @@ const handleReorderTasks = async (draggedTaskId: string, targetTaskId: string) =
     taskStore.clearError()
 
     // Get current tasks for the selected date
-    const currentTasks = tasks.value
+    const currentTasks = visibleTasks.value
     const draggedIndex = currentTasks.findIndex(task => task.id.toString() === draggedTaskId)
     const targetIndex = currentTasks.findIndex(task => task.id.toString() === targetTaskId)
 
@@ -180,6 +182,7 @@ const handleReorderTasks = async (draggedTaskId: string, targetTaskId: string) =
     // Call API to persist the new order
     console.log('Task reordering:', { draggedTaskId, targetTaskId, reorderData })
 
+    console.log(JSON.stringify(reorderData))
     // Update local state and persist to API
     await taskStore.reorderTasks(reorderData)
     console.log('Tasks reordered successfully')

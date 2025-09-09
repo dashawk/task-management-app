@@ -7,241 +7,233 @@ interface TaskState {
   isLoading: boolean
   error: string | null
   lastFetchedDate: string | null
+  loadedAll: boolean
+  searchQuery: string
 }
 
 export const useTaskStore = defineStore('task', () => {
   // State
-  const state = reactive<TaskState>({
-    tasks: [],
-    isLoading: false,
-    error: null,
-    lastFetchedDate: null
-  })
+  const tasks = ref<TaskDisplay[]>([])
+  const isLoading = ref<boolean>(false)
+  const error = ref<string | null>(null)
+  const lastFetchedDate = ref<string | null>(null)
+  const loadedAll = ref<boolean>(false)
+  const searchQuery = ref<string>('')
 
-  // Computed
-  const tasks = computed(() => state.tasks)
-  const isLoading = computed(() => state.isLoading)
-  const error = computed(() => state.error)
+  // Helpers
+  const sortTasksByOrder = (list: TaskDisplay[]) =>
+    list.sort((a, b) => {
+      const ao = a.order ?? Number.POSITIVE_INFINITY
+      const bo = b.order ?? Number.POSITIVE_INFINITY
+      if (ao !== bo) return ao - bo
+      // When order is equal/missing, keep older items first so newly created ones end up at the bottom
+      return a.createdAt.getTime() - b.createdAt.getTime()
+    })
 
-  // Get tasks for a specific date
-  const getTasksForDate = computed(() => (date: Date) => {
+  const updateTaskInList = (t: TaskDisplay) => {
+    const i = tasks.value.findIndex(task => task.id === t.id)
+    if (i !== -1) {
+      tasks.value[i] = t
+    }
+  }
+
+  const removeTaskFromList = (id: number) => {
+    tasks.value = tasks.value.filter(task => task.id !== id)
+  }
+
+  // Getters
+  const getTasksForDate = (date: Date) => {
     const dateStr = formatDateForApi(date)
-    return state.tasks.filter(task => task.dueDate && formatDateForApi(task.dueDate) === dateStr)
+    return tasks.value.filter(task => task.dueDate && formatDateForApi(task.dueDate) === dateStr)
+  }
+  const completedTasks = computed(() => tasks.value.filter(task => task.completed))
+  const pendingTasks = computed(() => tasks.value.filter(task => !task.completed))
+
+  const tasksFilteredByQuery = computed(() => {
+    const q = searchQuery.value.trim().toLowerCase()
+    if (!q) return tasks.value
+    return tasks.value.filter(
+      t => (t.title ?? '').toLowerCase().includes(q) || (t.description ?? '').toLowerCase().includes(q)
+    )
   })
-
-  // Get completed tasks
-  const completedTasks = computed(() => state.tasks.filter(task => task.completed))
-
-  // Get pending tasks
-  const pendingTasks = computed(() => state.tasks.filter(task => !task.completed))
 
   // Actions
   const fetchTasks = async (date?: Date) => {
-    try {
-      state.isLoading = true
-      state.error = null
+    isLoading.value = true
+    error.value = null
 
+    try {
       const params = date ? { date: formatDateForApi(date) } : undefined
-      const response = await taskService.getTasks(params)
+      const res = await taskService.getTasks(params)
+      if (!res.success) throw new Error(res.message)
 
-      console.log(response)
-      if (response.success) {
-        state.tasks = response.data.map(transformTaskToDisplay)
-        state.lastFetchedDate = date ? formatDateForApi(date) : null
-      } else {
-        throw new Error(response.message)
-      }
-    } catch (err: any) {
-      console.error('Failed to fetch tasks:', err)
-      state.error = err.message || 'Failed to fetch tasks'
-      throw err
+      tasks.value = sortTasksByOrder(res.data.map(transformTaskToDisplay))
+      lastFetchedDate.value = date ? formatDateForApi(date) : null
+      loadedAll.value = !date
+    } catch (e: unknown) {
+      error.value = toMessage(e) || 'Failed to fetch tasks'
+      throw e
     } finally {
-      state.isLoading = false
+      isLoading.value = false
     }
   }
 
-  const createTask = async (taskData: CreateTaskRequest) => {
+  const createTask = async (payload: CreateTaskRequest) => {
+    isLoading.value = true
+    error.value = null
+
     try {
-      state.isLoading = true
-      state.error = null
+      const res = await taskService.createTask(payload)
+      if (!res.success) throw new Error(res.message)
 
-      const response = await taskService.createTask(taskData)
+      const newTask = transformTaskToDisplay(res.data)
+      tasks.value = sortTasksByOrder([...tasks.value, newTask])
 
-      if (response.success) {
-        const newTask = transformTaskToDisplay(response.data)
-
-        // Optimistically add to local state (append to bottom)
-        state.tasks.push(newTask)
-
-        return newTask
-      } else {
-        throw new Error(response.message)
-      }
-    } catch (err: any) {
-      console.error('Failed to create task:', err)
-      state.error = err.message || 'Failed to create task'
-      throw err
+      return newTask
+    } catch (e: unknown) {
+      error.value = toMessage(e) || 'Failed to create task'
+      throw e
     } finally {
-      state.isLoading = false
+      isLoading.value = false
     }
   }
 
-  const updateTask = async (id: number, taskData: UpdateTaskRequest) => {
+  const updateTask = async (id: number, payload: UpdateTaskRequest) => {
+    isLoading.value = true
+    error.value = null
+
     try {
-      state.isLoading = true
-      state.error = null
+      const res = await taskService.updateTask(id, payload)
+      if (!res.success) throw new Error(res.message)
 
-      const response = await taskService.updateTask(id, taskData)
+      const updatedTask = transformTaskToDisplay(res.data)
+      updateTaskInList(updatedTask)
 
-      if (response.success) {
-        const updatedTask = transformTaskToDisplay(response.data)
+      tasks.value = sortTasksByOrder([...tasks.value])
 
-        // Update local state
-        const index = state.tasks.findIndex(task => task.id === id)
-        if (index !== -1) {
-          state.tasks[index] = updatedTask
-        }
-
-        return updatedTask
-      } else {
-        throw new Error(response.message)
-      }
-    } catch (err: any) {
-      console.error('Failed to update task:', err)
-      state.error = err.message || 'Failed to update task'
-      throw err
+      return updatedTask
+    } catch (e: unknown) {
+      error.value = toMessage(e) || 'Failed to update task'
+      throw e
     } finally {
-      state.isLoading = false
+      isLoading.value = false
     }
   }
 
   const deleteTask = async (id: number) => {
+    isLoading.value = true
+    error.value = null
+
     try {
-      state.isLoading = true
-      state.error = null
+      const res = await taskService.deleteTask(id)
+      if (!res.success) throw new Error(res.message)
 
-      const response = await taskService.deleteTask(id)
-
-      if (response.success) {
-        // Remove from local state
-        state.tasks = state.tasks.filter(task => task.id !== id)
-      } else {
-        throw new Error(response.message)
-      }
-    } catch (err: any) {
-      console.error('Failed to delete task:', err)
-      state.error = err.message || 'Failed to delete task'
-      throw err
+      removeTaskFromList(id)
+    } catch (e: unknown) {
+      error.value = toMessage(e) || 'Failed to delete task'
+      throw e
     } finally {
-      state.isLoading = false
+      isLoading.value = false
     }
   }
 
   const toggleTaskCompletion = async (id: number) => {
+    error.value = null
+    const index = tasks.value.findIndex(task => task.id === id)
+    if (index === -1) return
+    if (!tasks.value[index]) return
+
+    const prev = tasks.value[index].completed
+    tasks.value[index].completed = !prev
+
     try {
-      state.error = null
+      const res = await taskService.toggleTaskCompletion(id)
+      if (!res.success) throw new Error(res.message)
 
-      // Optimistic update
-      const taskIndex = state.tasks.findIndex(task => task.id === id)
-      if (taskIndex !== -1 && state.tasks[taskIndex]) {
-        state.tasks[taskIndex].completed = !state.tasks[taskIndex].completed
-      }
-
-      const response = await taskService.toggleTaskCompletion(id)
-
-      if (response.success) {
-        const updatedTask = transformTaskToDisplay(response.data)
-
-        // Update with server response
-        if (taskIndex !== -1) {
-          state.tasks[taskIndex] = updatedTask
-        }
-
-        return updatedTask
-      } else {
-        // Revert optimistic update on failure
-        if (taskIndex !== -1 && state.tasks[taskIndex]) {
-          state.tasks[taskIndex].completed = !state.tasks[taskIndex].completed
-        }
-        throw new Error(response.message)
-      }
-    } catch (err: any) {
-      console.error('Failed to toggle task completion:', err)
-      state.error = err.message || 'Failed to toggle task completion'
-      throw err
+      const updatedTask = transformTaskToDisplay(res.data)
+      updateTaskInList(updatedTask)
+      return updatedTask
+    } catch (e: unknown) {
+      tasks.value[index].completed = prev // Revert
+      error.value = toMessage(e) || 'Failed to toggle task completion'
+      throw e
     }
-  }
-
-  const clearError = () => {
-    state.error = null
-  }
-
-  const clearTasks = () => {
-    state.tasks = []
-    state.lastFetchedDate = null
   }
 
   const reorderTasks = async (reorderData: Array<{ id: number; order: number }>) => {
+    error.value = null
+    // snapshot for rollback
+    const snapshot = tasks.value.map(t => ({ ...t }))
     try {
-      state.error = null
-
-      // Optimistically update the order of tasks in local state
+      // optimistic local reorder
       reorderData.forEach(({ id, order }) => {
-        const taskIndex = state.tasks.findIndex(task => task.id === id)
-        if (taskIndex !== -1 && state.tasks[taskIndex]) {
-          state.tasks[taskIndex].order = order
-        }
+        const i = tasks.value.findIndex(t => t.id === id)
+        const t = i !== -1 ? tasks.value[i] : undefined
+        if (t) t.order = order
       })
 
-      // Re-sort tasks by order
-      state.tasks.sort((a, b) => {
-        const orderA = a.order || 0
-        const orderB = b.order || 0
-        if (orderA === orderB) {
-          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-        }
-        return orderA - orderB
-      })
+      tasks.value = sortTasksByOrder([...tasks.value])
+      const res = await taskService.reorderTasks(reorderData)
+      if (!res.success) throw new Error(res.message)
 
-      // Call API to persist the changes
-      const response = await taskService.reorderTasks(reorderData)
+      const updated = res.data.map(transformTaskToDisplay)
+      updated.forEach(updateTaskInList)
 
-      if (response.success) {
-        // Update with server response
-        const updatedTasks = response.data.map(transformTaskToDisplay)
-        updatedTasks.forEach(updatedTask => {
-          const taskIndex = state.tasks.findIndex(task => task.id === updatedTask.id)
-          if (taskIndex !== -1) {
-            state.tasks[taskIndex] = updatedTask
-          }
-        })
-      } else {
-        throw new Error(response.message)
-      }
-    } catch (err: any) {
-      console.error('Failed to reorder tasks:', err)
-      state.error = err.message || 'Failed to reorder tasks'
-      throw err
+      tasks.value = sortTasksByOrder([...tasks.value])
+    } catch (e: unknown) {
+      tasks.value = snapshot // rollback
+      error.value = toMessage(e) || 'Failed to reorder tasks'
+      throw e
     }
   }
 
+  // Search
+  const setSearchQuery = async (q: string) => {
+    searchQuery.value = q
+
+    if (q.trim() && !loadedAll.value) {
+      try {
+        await fetchTasks()
+      } catch {}
+    }
+  }
+  const clearSearch = () => {
+    searchQuery.value = ''
+  }
+
+  const clearError = () => {
+    error.value = null
+  }
+
+  const clearTasks = () => {
+    tasks.value = []
+    lastFetchedDate.value = null
+    loadedAll.value = false
+  }
+
   return {
-    // State
+    // state
     tasks,
     isLoading,
     error,
+    lastFetchedDate,
+    loadedAll,
+    searchQuery,
+    // derived
     getTasksForDate,
     completedTasks,
     pendingTasks,
-
-    // Actions
+    tasksFilteredByQuery,
+    // actions
     fetchTasks,
     createTask,
     updateTask,
     deleteTask,
     toggleTaskCompletion,
+    reorderTasks,
+    setSearchQuery,
+    clearSearch,
     clearError,
-    clearTasks,
-    reorderTasks
+    clearTasks
   }
 })
