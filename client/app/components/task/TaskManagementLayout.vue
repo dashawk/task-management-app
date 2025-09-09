@@ -26,9 +26,11 @@
           <div ref="taskListScrollRef" class="relative flex-1 overflow-y-auto p-8 pb-0 min-h-0 flex flex-col">
             <div class="flex-1">
               <TaskList
-                :tasks="filteredTasks"
+                :tasks="visibleTasks"
                 @toggle-completion="handleToggleCompletion"
                 @delete-task="handleDeleteTask"
+                @update-task="handleUpdateTask"
+                @reorder-tasks="handleReorderTasks"
               />
               <div ref="bottomAnchorRef" class="h-px"></div>
             </div>
@@ -55,6 +57,7 @@
           <!-- Fixed input area at bottom - always at viewport bottom -->
           <div class="flex-shrink-0 p-8 pt-6 bg-white border-t border-gray-100">
             <TaskInput
+              ref="bottomTaskInputRef"
               v-model="newTaskInput"
               :title="''"
               placeholder="What else do you need to do?"
@@ -98,6 +101,8 @@ const emit = defineEmits<{
   'task-input-blur': []
   'toggle-completion': [taskId: string]
   'delete-task': [taskId: string]
+  'update-task': [taskId: string, updates: import('~~/types/task-management').UpdateTaskRequest]
+  'reorder-tasks': [draggedTaskId: string, targetTaskId: string]
 }>()
 
 // Reactive state
@@ -105,20 +110,14 @@ const selectedDate = ref(props.selectedDate)
 const newTaskInput = ref('')
 const taskListScrollRef = ref<HTMLDivElement>()
 const bottomAnchorRef = ref<HTMLDivElement>()
+const bottomTaskInputRef = ref()
 
 // Mock data - replace with actual data
 const dateItems = ref<DateItem[]>([])
 
 // Computed properties
-const filteredTasks = computed(() => {
-  if (!props.tasks) return []
-
-  // Filter tasks for the selected date
-  return props.tasks.filter(task => {
-    if (!task.dueDate) return false
-    const taskDate = new Date(task.dueDate)
-    return taskDate.toDateString() === selectedDate.value.toDateString()
-  })
+const visibleTasks = computed(() => {
+  return props.tasks ?? []
 })
 
 const emptyStateTitle = computed(() => {
@@ -157,7 +156,7 @@ onMounted(() => {
 })
 
 // Scroll to latest whenever the filtered list changes (e.g., new task added)
-watch(filteredTasks, (newVal, oldVal) => {
+watch(visibleTasks, (newVal, oldVal) => {
   if (!oldVal || newVal.length >= oldVal.length) {
     scrollToBottom(true)
   }
@@ -217,6 +216,21 @@ const handleDeleteTask = (taskId: string) => {
   emit('delete-task', taskId)
 }
 
+const handleUpdateTask = (taskId: string, updates: import('~~/types/task-management').UpdateTaskRequest) => {
+  emit('update-task', taskId, updates)
+}
+
+const handleReorderTasks = (draggedTaskId: string, targetTaskId: string) => {
+  emit('reorder-tasks', draggedTaskId, targetTaskId)
+}
+
+// Method to focus the bottom input
+const focusBottomInput = () => {
+  nextTick(() => {
+    bottomTaskInputRef.value?.focus()
+  })
+}
+
 // Watch for external prop changes
 watch(
   () => props.selectedDate,
@@ -233,4 +247,9 @@ watch(
     }
   }
 )
+
+// Expose methods to parent components
+defineExpose({
+  focusBottomInput
+})
 </script>

@@ -124,11 +124,27 @@ watch(inputValue, newValue => {
   emit('update:modelValue', newValue)
 })
 
+// Refocus when input becomes enabled (e.g., after creating a task)
+watch(
+  () => props.disabled,
+  isDisabled => {
+    if (!isDisabled) {
+      nextTick(() => {
+        inputRef.value?.focus()
+      })
+    }
+  }
+)
+
 const handleSubmit = () => {
   const value = inputValue.value.trim()
   if (value) {
     emit('submit', value)
     inputValue.value = '' // Clear input after submission
+    nextTick(() => {
+      // If not disabled, keep focus for quick entry; if disabled, the watcher below will refocus once enabled
+      inputRef.value?.focus()
+    })
   }
 }
 
@@ -152,5 +168,11 @@ onMounted(() => {
   nextTick(() => {
     inputRef.value?.focus()
   })
+})
+
+// Expose methods and refs to parent components
+defineExpose({
+  inputRef,
+  focus: () => inputRef.value?.focus()
 })
 </script>

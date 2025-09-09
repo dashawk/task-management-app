@@ -12,7 +12,7 @@
         </div>
         <input
           id="email"
-          v-model="form.email"
+          v-model="email"
           type="email"
           required
           placeholder="Enter your email"
@@ -33,7 +33,7 @@
         </div>
         <input
           id="password"
-          v-model="form.password"
+          v-model="password"
           type="password"
           required
           placeholder="Enter your password"
@@ -46,7 +46,7 @@
     <div class="flex items-center">
       <input
         id="remember"
-        v-model="form.remember"
+        v-model="rememberPref"
         type="checkbox"
         :disabled="isLoading"
         class="h-4 w-4 text-gray-600 focus:ring-gray-500 border-gray-300 rounded disabled:opacity-50"
@@ -68,62 +68,33 @@
 <script setup lang="ts">
 import { Mail, Lock } from 'lucide-vue-next'
 
-// Form state
-const form = reactive({
-  email: '',
-  password: '',
-  remember: false
-})
-
 // Auth store
-const { login } = useAuthStore()
+const auth = useAuthStore()
+const { isLoading, error, rememberPref } = storeToRefs(auth)
+const { login, clearError } = auth
 
-// Loading and error state
-const isLoading = ref(false)
-const error = ref<string | null>(null)
+const email = ref<string>('')
+const password = ref<string>('')
 
 // Computed
 const isFormValid = computed(() => {
-  return form.email.trim() !== '' && form.password.trim() !== ''
+  return email.value.trim() !== '' && password.value.trim() !== ''
 })
 
 // Methods
 const handleSubmit = async () => {
   if (!isFormValid.value || isLoading.value) return
 
-  try {
-    isLoading.value = true
-    error.value = null
-
-    // Attempt login using nuxt-auth-sanctum
-    await login({
-      email: form.email.trim(),
-      password: form.password,
-      remember: form.remember
-    })
-
-    // Success - nuxt-auth-sanctum will handle the redirect
-    console.log('Login successful')
-  } catch (err: any) {
-    console.error('Login failed:', err)
-
-    // Handle different types of errors
-    if (err?.data?.message) {
-      error.value = err.data.message
-    } else if (err?.message) {
-      error.value = err.message
-    } else {
-      error.value = 'Login failed. Please check your credentials and try again.'
-    }
-  } finally {
-    isLoading.value = false
-  }
+  await login({
+    email: email.value.trim(),
+    password: password.value.trim()
+  })
 }
 
 // Clear error when user starts typing
-watch([() => form.email, () => form.password], () => {
+watch([email, password], () => {
   if (error.value) {
-    error.value = null
+    clearError()
   }
 })
 </script>

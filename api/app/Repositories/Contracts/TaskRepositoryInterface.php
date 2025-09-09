@@ -63,4 +63,21 @@ interface TaskRepositoryInterface extends BaseRepositoryInterface
      * @return LengthAwarePaginator|Collection
      */
     public function getPendingByUser(int $userId, ?int $perPage = null): LengthAwarePaginator|Collection;
+
+    /**
+     * Get tasks for a specific user by IDs
+     *
+     * @param int $userId
+     * @param array $taskIds
+     * @return Collection
+     */
+    public function getByUserAndIds(int $userId, array $taskIds): Collection;
+
+    /**
+     * Reorder tasks in bulk
+     *
+     * @param array $tasksData Array of ['id' => int, 'order' => int]
+     * @return Collection
+     */
+    public function reorderTasks(array $tasksData): Collection;
 }

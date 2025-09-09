@@ -8,7 +8,7 @@
 
         <div v-if="showSearch" class="flex-1 flex justify-center px-4 lg:px-8">
           <SearchForm
-            v-model="searchQuery"
+            v-model="searchModel"
             :placeholder="searchPlaceholder"
             class="w-full max-w-lg"
             @search="handleSearch"
@@ -59,8 +59,12 @@ const props = withDefaults(
 // Emits
 const emit = defineEmits<NavigationBarEmits>()
 
-// Reactive state
-const searchQuery = ref('')
+// Search state bound to Pinia
+const taskStore = useTaskStore()
+const searchModel = computed({
+  get: () => taskStore.searchQuery,
+  set: (val: string) => taskStore.setSearchQuery(val)
+})
 
 // Computed classes for the navigation
 const navigationClasses = computed(() => {
@@ -95,12 +99,4 @@ const handleSettingsClick = () => {
 const handleLogoutClick = () => {
   emit('logout-click')
 }
-
-// Watch for external search query changes
-watch(
-  () => searchQuery.value,
-  () => {
-    // Optional: Add debounced search functionality here
-  }
-)
 </script>

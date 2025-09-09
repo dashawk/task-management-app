@@ -14,6 +14,8 @@ class TaskRepository extends BaseRepository implements TaskRepositoryInterface
         parent::__construct($task);
     }
 
+
+
     /**
      * Get tasks for a specific user
      *
@@ -25,6 +27,7 @@ class TaskRepository extends BaseRepository implements TaskRepositoryInterface
     {
         $query = $this->model->where('user_id', $userId)
             ->orderBy('due_date', 'asc')
+            ->orderBy('order', 'asc')
             ->orderBy('created_at', 'desc');
 
         if ($perPage) {
@@ -46,6 +49,7 @@ class TaskRepository extends BaseRepository implements TaskRepositoryInterface
     {
         $query = $this->model->where('user_id', $userId)
             ->whereDate('due_date', $date)
+            ->orderBy('order', 'asc')
             ->orderBy('created_at', 'desc');
 
         if ($perPage) {
@@ -131,5 +135,41 @@ class TaskRepository extends BaseRepository implements TaskRepositoryInterface
         }
 
         return $query->get();
+    }
+
+    /**
+     * Get tasks for a specific user by IDs
+     *
+     * @param int $userId
+     * @param array $taskIds
+     * @return Collection
+     */
+    public function getByUserAndIds(int $userId, array $taskIds): Collection
+    {
+        return $this->model->where('user_id', $userId)
+            ->whereIn('id', $taskIds)
+            ->get();
+    }
+
+    /**
+     * Reorder tasks in bulk
+     *
+     * @param array $tasksData Array of ['id' => int, 'order' => int]
+     * @return Collection
+     */
+    public function reorderTasks(array $tasksData): Collection
+    {
+        $updatedTasks = new Collection();
+
+        foreach ($tasksData as $taskData) {
+            $task = $this->model->find($taskData['id']);
+            if ($task) {
+                $task->order = $taskData['order'];
+                $task->save();
+                $updatedTasks->push($task);
+            }
+        }
+
+        return $updatedTasks;
     }
 }

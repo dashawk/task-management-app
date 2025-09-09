@@ -7,6 +7,7 @@ export interface Task {
   updated_at: string
   due_date?: string
   user_id: number
+  order?: number
 }
 
 // Frontend-friendly version with Date objects
@@ -19,6 +20,7 @@ export interface TaskDisplay {
   updatedAt: Date
   dueDate?: Date
   userId: number
+  order?: number
 }
 
 // API request/response types
@@ -27,6 +29,7 @@ export interface CreateTaskRequest {
   description?: string
   due_date?: string
   completed?: boolean
+  order?: number
 }
 
 export interface UpdateTaskRequest {
@@ -34,6 +37,7 @@ export interface UpdateTaskRequest {
   description?: string
   due_date?: string
   completed?: boolean
+  order?: number
 }
 
 export interface DateItem {
