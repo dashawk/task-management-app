@@ -1,9 +1,59 @@
 <template>
   <main class="flex-1 h-[calc(100vh-65px)]">
+    <!-- Error Message -->
+    <div v-if="error" class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md mb-4 mx-4 mt-4">
+      <div class="flex">
+        <div class="flex-shrink-0">
+          <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+            <path
+              fill-rule="evenodd"
+              d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+              clip-rule="evenodd"
+            />
+          </svg>
+        </div>
+        <div class="ml-3">
+          <p class="text-sm">{{ error }}</p>
+        </div>
+        <div class="ml-auto pl-3">
+          <button @click="taskStore.clearError()" class="text-red-400 hover:text-red-600">
+            <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+              <path
+                fill-rule="evenodd"
+                d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                clip-rule="evenodd"
+              />
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div v-if="isLoading" class="absolute inset-0 bg-white bg-opacity-75 flex items-center justify-center z-50">
+      <div class="flex items-center space-x-2">
+        <svg
+          class="animate-spin h-5 w-5 text-gray-600"
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+        >
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path
+            class="opacity-75"
+            fill="currentColor"
+            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+          ></path>
+        </svg>
+        <span class="text-gray-600">Loading...</span>
+      </div>
+    </div>
+
     <TaskManagementLayout
       :has-tasks="hasTasks"
       :selected-date="selectedDate"
       :tasks="tasks"
+      :is-loading="isSubmitting"
       @task-submit="handleTaskSubmit"
       @date-select="handleDateSelect"
       @task-input-focus="handleTaskInputFocus"
@@ -15,45 +65,59 @@
 </template>
 
 <script setup lang="ts">
-import type { Task } from '~~/types/task-management'
+import { formatDateForApi } from '~/services/taskService'
 
 definePageMeta({
   layout: 'default',
   middleware: 'sanctum:auth'
 })
 
+// Store
+const taskStore = useTaskStore()
+
 // Reactive state
-const tasks = ref<Task[]>([])
 const selectedDate = ref(new Date())
+const isSubmitting = ref(false)
 
 // Computed properties
+const tasks = computed(() => taskStore.getTasksForDate(selectedDate.value))
 const hasTasks = computed(() => tasks.value.length > 0)
+const isLoading = computed(() => taskStore.isLoading)
+const error = computed(() => taskStore.error)
 
 // Event handlers
-const handleTaskSubmit = (taskTitle: string) => {
-  console.log('New task submitted:', taskTitle)
+const handleTaskSubmit = async (taskTitle: string) => {
+  if (isSubmitting.value) return
 
-  // Create new task
-  const newTask: Task = {
-    id: crypto.randomUUID(),
-    title: taskTitle,
-    completed: false,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-    dueDate: selectedDate.value
+  try {
+    isSubmitting.value = true
+    taskStore.clearError()
+
+    await taskStore.createTask({
+      title: taskTitle,
+      due_date: formatDateForApi(selectedDate.value),
+      completed: false
+    })
+
+    console.log('Task created successfully')
+  } catch (error) {
+    console.error('Failed to create task:', error)
+    // Error is handled by the store and can be displayed in UI
+  } finally {
+    isSubmitting.value = false
   }
-
-  tasks.value.push(newTask)
-
-  // TODO: Save to backend/database
-  console.log('Current tasks:', tasks.value)
 }
 
-const handleDateSelect = (date: Date) => {
+const handleDateSelect = async (date: Date) => {
   selectedDate.value = date
   console.log('Date selected:', date)
 
-  // TODO: Load tasks for selected date
+  try {
+    taskStore.clearError()
+    await taskStore.fetchTasks(date)
+  } catch (error) {
+    console.error('Failed to fetch tasks for date:', error)
+  }
 }
 
 const handleTaskInputFocus = () => {
@@ -64,36 +128,34 @@ const handleTaskInputBlur = () => {
   console.log('Task input blurred')
 }
 
-const handleToggleCompletion = (taskId: string) => {
-  console.log('Toggle completion for task:', taskId)
-
-  // Find and update the task
-  const taskIndex = tasks.value.findIndex((task: Task) => task.id === taskId)
-  if (taskIndex !== -1) {
-    tasks.value[taskIndex].completed = !tasks.value[taskIndex].completed
-    tasks.value[taskIndex].updatedAt = new Date()
-
-    // TODO: Update in backend/database
-    console.log('Task updated:', tasks.value[taskIndex])
+const handleToggleCompletion = async (taskId: string) => {
+  try {
+    taskStore.clearError()
+    await taskStore.toggleTaskCompletion(Number(taskId))
+    console.log('Task completion toggled successfully')
+  } catch (error) {
+    console.error('Failed to toggle task completion:', error)
   }
 }
 
-const handleDeleteTask = (taskId: string) => {
-  console.log('Delete task:', taskId)
-
-  // Remove the task from the array
-  const taskIndex = tasks.value.findIndex((task: Task) => task.id === taskId)
-  if (taskIndex !== -1) {
-    tasks.value.splice(taskIndex, 1)
-
-    // TODO: Delete from backend/database
-    console.log('Task deleted, remaining tasks:', tasks.value)
+const handleDeleteTask = async (taskId: string) => {
+  try {
+    taskStore.clearError()
+    await taskStore.deleteTask(Number(taskId))
+    console.log('Task deleted successfully')
+  } catch (error) {
+    console.error('Failed to delete task:', error)
   }
 }
 
-// Initialize with today's date
-onMounted(() => {
+// Initialize with today's date and load tasks
+onMounted(async () => {
   selectedDate.value = new Date()
-  // TODO: Load existing tasks from backend
+
+  try {
+    await taskStore.fetchTasks(selectedDate.value)
+  } catch (error) {
+    console.error('Failed to load initial tasks:', error)
+  }
 })
 </script>

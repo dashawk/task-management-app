@@ -13,7 +13,8 @@
           v-model="inputValue"
           type="text"
           :placeholder="placeholder"
-          class="w-full px-6 py-4 text-lg border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 pr-16"
+          :disabled="disabled"
+          class="w-full px-6 py-4 text-lg border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 pr-16 disabled:opacity-50 disabled:cursor-not-allowed"
           @keydown.enter="handleSubmit"
           @focus="handleFocus"
           @blur="handleBlur"
@@ -23,7 +24,8 @@
         <button
           v-if="inputValue.trim()"
           type="button"
-          class="absolute right-3 top-1/2 transform -translate-y-1/2 p-2 bg-black text-white rounded-full hover:bg-gray-800 transition-colors duration-200"
+          :disabled="disabled"
+          class="absolute right-3 top-1/2 transform -translate-y-1/2 p-2 bg-black text-white rounded-full hover:bg-gray-800 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
           @click="handleSubmit"
         >
           <ArrowUp :size="20" />
@@ -55,7 +57,8 @@
       v-model="inputValue"
       type="text"
       :placeholder="placeholder"
-      class="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent pr-12"
+      :disabled="disabled"
+      class="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent pr-12 disabled:opacity-50 disabled:cursor-not-allowed"
       @keydown.enter="handleSubmit"
       @focus="handleFocus"
       @blur="handleBlur"
@@ -63,7 +66,8 @@
     <button
       v-if="inputValue.trim()"
       type="button"
-      class="absolute right-3 top-1/2 transform -translate-y-1/2 w-8 h-8 bg-black text-white rounded-full flex items-center justify-center hover:bg-gray-800 transition-colors duration-200"
+      :disabled="disabled"
+      class="absolute right-3 top-1/2 transform -translate-y-1/2 w-8 h-8 bg-black text-white rounded-full flex items-center justify-center hover:bg-gray-800 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
       @click="handleSubmit"
     >
       <ArrowUp :size="16" />
@@ -78,13 +82,15 @@ interface Props {
   title?: string
   modelValue?: string
   compact?: boolean
+  disabled?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
   placeholder: 'Write the task you plan to do today here...',
   title: 'What do you have in mind?',
   modelValue: '',
-  compact: false
+  compact: false,
+  disabled: false
 })
 
 const emit = defineEmits<{

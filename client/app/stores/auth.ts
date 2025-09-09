@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import type { User } from '../../types/navigation.ts'
+import type { User } from '~~/types/navigation'
 
 interface LoginCredentials {
   email: string

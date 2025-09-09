@@ -13,6 +13,7 @@
             v-model="newTaskInput"
             :title="emptyStateTitle"
             :placeholder="taskInputPlaceholder"
+            :disabled="isLoading"
             @submit="handleTaskSubmit"
             @focus="handleTaskInputFocus"
             @blur="handleTaskInputBlur"
@@ -39,6 +40,7 @@
               v-model="newTaskInput"
               :title="''"
               placeholder="What else do you need to do?"
+              :disabled="isLoading"
               compact
               @submit="handleTaskSubmit"
               @focus="handleTaskInputFocus"
@@ -52,18 +54,20 @@
 </template>
 
 <script setup lang="ts">
-import type { DateItem, Task } from '~~/types/task-management'
+import type { DateItem, TaskDisplay } from '~~/types/task-management'
 
 interface Props {
   hasTasks?: boolean
   selectedDate?: Date
-  tasks?: Task[]
+  tasks?: TaskDisplay[]
+  isLoading?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
   hasTasks: false,
   selectedDate: () => new Date(),
-  tasks: () => []
+  tasks: () => [],
+  isLoading: false
 })
 
 const emit = defineEmits<{

@@ -16,12 +16,12 @@
 </template>
 
 <script setup lang="ts">
-import type { Task } from '~~/types/task-management'
+import type { TaskDisplay } from '~~/types/task-management'
 
 import TaskListItem from './TaskListItem.vue'
 
 interface Props {
-  tasks: Task[]
+  tasks: TaskDisplay[]
 }
 
 defineProps<Props>()
