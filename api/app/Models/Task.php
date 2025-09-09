@@ -21,6 +21,7 @@ class Task extends Model
         'description',
         'completed',
         'due_date',
+        'order',
     ];
 
     /**

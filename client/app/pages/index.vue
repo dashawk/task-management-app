@@ -40,6 +40,8 @@
       @task-input-blur="handleTaskInputBlur"
       @toggle-completion="handleToggleCompletion"
       @delete-task="handleDeleteTask"
+      @update-task="handleUpdateTask"
+      @reorder-tasks="handleReorderTasks"
     />
   </main>
 </template>
@@ -125,6 +127,64 @@ const handleDeleteTask = async (taskId: string) => {
     console.log('Task deleted successfully')
   } catch (error) {
     console.error('Failed to delete task:', error)
+  }
+}
+
+const handleUpdateTask = async (taskId: string, updates: import('~~/types/task-management').UpdateTaskRequest) => {
+  try {
+    taskStore.clearError()
+    await taskStore.updateTask(Number(taskId), updates)
+    console.log('Task updated successfully')
+  } catch (error) {
+    console.error('Failed to update task:', error)
+  }
+}
+
+const handleReorderTasks = async (draggedTaskId: string, targetTaskId: string) => {
+  try {
+    taskStore.clearError()
+
+    // Get current tasks for the selected date
+    const currentTasks = tasks.value
+    const draggedIndex = currentTasks.findIndex(task => task.id.toString() === draggedTaskId)
+    const targetIndex = currentTasks.findIndex(task => task.id.toString() === targetTaskId)
+
+    if (draggedIndex === -1 || targetIndex === -1) {
+      console.warn('Invalid task indices for reordering')
+      return
+    }
+
+    // Don't reorder if dropping on the same position
+    if (draggedIndex === targetIndex) {
+      return
+    }
+
+    // Create new order for tasks
+    const reorderedTasks = [...currentTasks]
+    const draggedTask = reorderedTasks[draggedIndex]
+    if (!draggedTask) {
+      console.warn('Dragged task not found')
+      return
+    }
+
+    reorderedTasks.splice(draggedIndex, 1)
+    reorderedTasks.splice(targetIndex, 0, draggedTask)
+
+    // Update order values
+    const reorderData = reorderedTasks.map((task, index) => ({
+      id: task.id,
+      order: index + 1
+    }))
+
+    // Call API to persist the new order
+    console.log('Task reordering:', { draggedTaskId, targetTaskId, reorderData })
+
+    // Update local state and persist to API
+    await taskStore.reorderTasks(reorderData)
+    console.log('Tasks reordered successfully')
+  } catch (error) {
+    console.error('Failed to reorder tasks:', error)
+    // The error is already handled by the store, but we could show a toast notification here
   }
 }
 

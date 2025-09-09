@@ -149,4 +149,39 @@ class TaskController extends BaseApiController
             'Task completion status updated successfully'
         );
     }
+
+    /**
+     * Reorder tasks in bulk.
+     */
+    public function reorder(Request $request): JsonResponse
+    {
+        $request->validate([
+            'tasks' => ['required', 'array'],
+            'tasks.*.id' => ['required', 'integer', 'exists:tasks,id'],
+            'tasks.*.order' => ['required', 'integer', 'min:1'],
+        ]);
+
+        $userId = $request->user()->id;
+        $tasksData = $request->input('tasks');
+
+        try {
+            // Verify all tasks belong to the authenticated user
+            $taskIds = collect($tasksData)->pluck('id');
+            $userTasks = $this->taskRepository->getByUserAndIds($userId, $taskIds->toArray());
+
+            if ($userTasks->count() !== $taskIds->count()) {
+                return $this->errorResponse('Some tasks do not belong to the authenticated user', 403);
+            }
+
+            $updatedTasks = $this->taskRepository->reorderTasks($tasksData);
+        } catch (\Throwable $e) {
+            Log::error('Failed to reorder tasks', ['exception' => $e]);
+            return $this->errorResponse('Failed to reorder tasks', 500);
+        }
+
+        return $this->successResponse(
+            TaskResource::collection($updatedTasks),
+            'Tasks reordered successfully'
+        );
+    }
 }

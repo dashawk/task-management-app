@@ -143,7 +143,7 @@ export const useTaskStore = defineStore('task', () => {
 
       // Optimistic update
       const taskIndex = state.tasks.findIndex(task => task.id === id)
-      if (taskIndex !== -1) {
+      if (taskIndex !== -1 && state.tasks[taskIndex]) {
         state.tasks[taskIndex].completed = !state.tasks[taskIndex].completed
       }
 
@@ -160,7 +160,7 @@ export const useTaskStore = defineStore('task', () => {
         return updatedTask
       } else {
         // Revert optimistic update on failure
-        if (taskIndex !== -1) {
+        if (taskIndex !== -1 && state.tasks[taskIndex]) {
           state.tasks[taskIndex].completed = !state.tasks[taskIndex].completed
         }
         throw new Error(response.message)
@@ -181,6 +181,50 @@ export const useTaskStore = defineStore('task', () => {
     state.lastFetchedDate = null
   }
 
+  const reorderTasks = async (reorderData: Array<{ id: number; order: number }>) => {
+    try {
+      state.error = null
+
+      // Optimistically update the order of tasks in local state
+      reorderData.forEach(({ id, order }) => {
+        const taskIndex = state.tasks.findIndex(task => task.id === id)
+        if (taskIndex !== -1 && state.tasks[taskIndex]) {
+          state.tasks[taskIndex].order = order
+        }
+      })
+
+      // Re-sort tasks by order
+      state.tasks.sort((a, b) => {
+        const orderA = a.order || 0
+        const orderB = b.order || 0
+        if (orderA === orderB) {
+          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        }
+        return orderA - orderB
+      })
+
+      // Call API to persist the changes
+      const response = await taskService.reorderTasks(reorderData)
+
+      if (response.success) {
+        // Update with server response
+        const updatedTasks = response.data.map(transformTaskToDisplay)
+        updatedTasks.forEach(updatedTask => {
+          const taskIndex = state.tasks.findIndex(task => task.id === updatedTask.id)
+          if (taskIndex !== -1) {
+            state.tasks[taskIndex] = updatedTask
+          }
+        })
+      } else {
+        throw new Error(response.message)
+      }
+    } catch (err: any) {
+      console.error('Failed to reorder tasks:', err)
+      state.error = err.message || 'Failed to reorder tasks'
+      throw err
+    }
+  }
+
   return {
     // State
     tasks,
@@ -197,6 +241,7 @@ export const useTaskStore = defineStore('task', () => {
     deleteTask,
     toggleTaskCompletion,
     clearError,
-    clearTasks
+    clearTasks,
+    reorderTasks
   }
 })

@@ -29,6 +29,8 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
         // Additional task routes
         Route::patch('/tasks/{task}/toggle-completion', [TaskController::class, 'toggleCompletion'])
             ->name('tasks.toggle-completion');
+        Route::post('/tasks/reorder', [TaskController::class, 'reorder'])
+            ->name('tasks.reorder');
     });
 });
 

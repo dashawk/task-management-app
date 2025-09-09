@@ -29,6 +29,8 @@
                 :tasks="filteredTasks"
                 @toggle-completion="handleToggleCompletion"
                 @delete-task="handleDeleteTask"
+                @update-task="handleUpdateTask"
+                @reorder-tasks="handleReorderTasks"
               />
               <div ref="bottomAnchorRef" class="h-px"></div>
             </div>
@@ -98,6 +100,8 @@ const emit = defineEmits<{
   'task-input-blur': []
   'toggle-completion': [taskId: string]
   'delete-task': [taskId: string]
+  'update-task': [taskId: string, updates: import('~~/types/task-management').UpdateTaskRequest]
+  'reorder-tasks': [draggedTaskId: string, targetTaskId: string]
 }>()
 
 // Reactive state
@@ -215,6 +219,14 @@ const handleToggleCompletion = (taskId: string) => {
 
 const handleDeleteTask = (taskId: string) => {
   emit('delete-task', taskId)
+}
+
+const handleUpdateTask = (taskId: string, updates: import('~~/types/task-management').UpdateTaskRequest) => {
+  emit('update-task', taskId, updates)
+}
+
+const handleReorderTasks = (draggedTaskId: string, targetTaskId: string) => {
+  emit('reorder-tasks', draggedTaskId, targetTaskId)
 }
 
 // Watch for external prop changes

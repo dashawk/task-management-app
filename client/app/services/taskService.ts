@@ -117,6 +117,19 @@ export class TaskService {
 
     return response
   }
+
+  /**
+   * Reorder tasks in bulk
+   */
+  async reorderTasks(tasks: Array<{ id: number; order: number }>): Promise<ApiResponse<Task[]>> {
+    const client = useSanctumClient()
+    const response = await client<ApiResponse<Task[]>>(`${this.basePath}/reorder`, {
+      method: 'POST',
+      body: { tasks }
+    })
+
+    return response
+  }
 }
 
 // Export a singleton instance
@@ -132,7 +145,8 @@ export function transformTaskToDisplay(task: Task): import('~~/types/task-manage
     createdAt: new Date(task.created_at),
     updatedAt: new Date(task.updated_at),
     dueDate: task.due_date ? new Date(task.due_date) : undefined,
-    userId: task.user_id
+    userId: task.user_id,
+    order: task.order
   }
 }
 

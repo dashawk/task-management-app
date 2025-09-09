@@ -23,10 +23,11 @@ class StoreTaskRequest extends FormRequest
     {
         return [
             'title' => ['required', 'string', 'max:255'],
-            'description' => ['nullable', 'string', 'max:1000'],
-            'due_date' => ['nullable', 'date'],
+            'description' => ['nullable', 'string', 'max:1000'],    // For future use
+            'due_date' => ['nullable', 'date'],    // For future use
             'completed' => ['sometimes', 'boolean'],
             'user_id' => ['required', 'integer', 'exists:users,id'],
+            'order' => ['nullable', 'integer', 'min:1'],
         ];
     }
 

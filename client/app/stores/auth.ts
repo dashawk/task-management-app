@@ -5,6 +5,7 @@ interface LoginCredentials {
   email: string
   password: string
   remember?: boolean
+  [key: string]: unknown
 }
 
 interface AuthState {
