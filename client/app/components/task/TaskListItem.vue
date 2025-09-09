@@ -127,7 +127,7 @@
         v-if="task.createdAt && !confirmingDelete"
         class="absolute inset-0 flex items-center justify-end whitespace-nowrap text-xs text-gray-400 transition-opacity duration-200 opacity-100 group-hover:opacity-0"
       >
-        {{ formatTaskTime(task.createdAt) }}
+        {{ isSearching ? formatSearchDateTime(task) : formatTaskTime(task.createdAt) }}
       </div>
     </div>
   </div>
@@ -259,16 +259,40 @@ const handleDrop = (event: DragEvent) => {
   }
 }
 
+// Access search context from the store to detect when results span multiple dates
+const taskStore = useTaskStore()
+const isSearching = computed(() => !!taskStore.searchQuery?.trim())
+
+const formatTime = (date: Date): string => {
+  const d = new Date(date)
+  return d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })
+}
+
+const formatFriendlyDate = (date: Date): string => {
+  const d = new Date(date)
+  const now = new Date()
+  const yesterday = new Date(now)
+  yesterday.setDate(yesterday.getDate() - 1)
+
+  if (d.toDateString() === now.toDateString()) return 'Today'
+  if (d.toDateString() === yesterday.toDateString()) return 'Yesterday'
+
+  const sameYear = d.getFullYear() === now.getFullYear()
+  const base = d.toLocaleDateString('en-US', {
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric'
+  })
+  return sameYear ? base : `${base}, ${d.getFullYear()}`
+}
+
+// Existing behavior when not searching: show time for today, otherwise a compact date
 const formatTaskTime = (date: Date): string => {
   const now = new Date()
   const taskDate = new Date(date)
 
   if (taskDate.toDateString() === now.toDateString()) {
-    return taskDate.toLocaleTimeString('en-US', {
-      hour: 'numeric',
-      minute: '2-digit',
-      hour12: true
-    })
+    return formatTime(taskDate)
   }
 
   if (taskDate.getFullYear() === now.getFullYear()) {
@@ -283,5 +307,12 @@ const formatTaskTime = (date: Date): string => {
     day: 'numeric',
     year: 'numeric'
   })
+}
+
+// Search-mode date+time: prefer dueDate for the date label, fall back to createdAt; time from createdAt
+const formatSearchDateTime = (task: TaskDisplay): string => {
+  const dateLabel = formatFriendlyDate(task.dueDate ?? task.createdAt)
+  const timeLabel = formatTime(task.createdAt)
+  return `${dateLabel}, ${timeLabel}`
 }
 </script>

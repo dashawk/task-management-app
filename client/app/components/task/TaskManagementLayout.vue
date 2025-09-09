@@ -22,18 +22,10 @@
 
         <!-- Task List State - Show when tasks exist -->
         <template v-else>
-          <!-- Search bar -->
-          <div class="px-8 pt-6 pb-4 bg-white border-b border-gray-100">
-            <TaskSearch v-model="searchModel" />
-          </div>
           <!-- Scrollable task list area that takes all available space -->
           <div ref="taskListScrollRef" class="relative flex-1 overflow-y-auto p-8 pb-0 min-h-0 flex flex-col">
             <div class="flex-1">
-              <div v-if="isSearching && visibleTasks.length === 0" class="text-center text-gray-500 py-12">
-                No tasks match your search.
-              </div>
               <TaskList
-                v-else
                 :tasks="visibleTasks"
                 @toggle-completion="handleToggleCompletion"
                 @delete-task="handleDeleteTask"
@@ -100,9 +92,7 @@ const props = withDefaults(defineProps<Props>(), {
 })
 
 // Avoid flashing empty state while loading
-const taskStore = useTaskStore()
-const isSearching = computed(() => !!taskStore.searchQuery)
-const showEmptyState = computed(() => !props.hasTasks && !props.isLoading && !isSearching.value)
+const showEmptyState = computed(() => !props.hasTasks && !props.isLoading)
 
 const emit = defineEmits<{
   'task-submit': [task: string]
@@ -175,12 +165,6 @@ watch(visibleTasks, (newVal, oldVal) => {
 // When switching dates, jump to bottom without animation
 watch(selectedDate, () => {
   scrollToBottom(false)
-})
-
-// Two-way binding for TaskSearch
-const searchModel = computed({
-  get: () => taskStore.searchQuery,
-  set: (val: string) => taskStore.setSearchQuery(val)
 })
 
 // Methods
